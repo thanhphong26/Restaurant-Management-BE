@@ -1,2 +1,2 @@
-import { connectMongoDB } from "./mongoose/mongoose.js";
+import { connectMongoDB } from "./src/mongoose/mongoose.js";
 connectMongoDB();
