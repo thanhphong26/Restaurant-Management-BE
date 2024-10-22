@@ -1,4 +1,5 @@
-import mongoose from "../mongoose/mongoose.js";
+import { Schema, mongoose } from "mongoose";
+
 const recruimentSchema = new mongoose.Schema({
     position: {
         type: String,
@@ -18,6 +19,11 @@ const recruimentSchema = new mongoose.Schema({
     require: String,
     infomation: String,
     type: String,
+    status: {
+        type: String,
+        enum: ['active', 'inactive'],
+        default: 'active',
+    }
 });
 const Recruiment = mongoose.model("Recruiment", recruimentSchema);
 export default Recruiment;
