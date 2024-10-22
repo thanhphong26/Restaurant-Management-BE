@@ -1,11 +1,14 @@
 import express from 'express';
 import mongoose from "mongoose";
 import initWebRount from './router/web.js';
+import { db } from './mongoose/mongoose.js';
 import dotenv from 'dotenv';
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 4000;
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+const port = process.env.PORT || 3000;
 
 initWebRount(app);
 
