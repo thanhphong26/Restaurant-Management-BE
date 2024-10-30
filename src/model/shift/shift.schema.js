@@ -1,4 +1,6 @@
-import mongoose from "../mongoose/mongoose.js";
+import { Schema, mongoose } from "mongoose";
+
+
 const shiftSchema = new mongoose.Schema({
     list_staff: [{
         type: Schema.Types.ObjectId,

@@ -1,4 +1,3 @@
-import { status } from "../../utils/constraints.js";
 import { Schema, mongoose } from "mongoose";
 const applicationSchema = new mongoose.Schema({
     recruitment_id: {
@@ -31,7 +30,7 @@ const applicationSchema = new mongoose.Schema({
     status: {
         type: String,
         enum: ['Not viewed', 'Viewed', 'Qualified', 'Invited', 'Successful', 'Rejected'],
-        default: status.ACTIVE,
+        default: 'Not viewed',
     }
 });
 const Application = mongoose.model("Application", applicationSchema);

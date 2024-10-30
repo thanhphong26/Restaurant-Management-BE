@@ -1,28 +1,47 @@
-// import express from 'express';
-// import dotenv from 'dotenv';
-// import userController from '../controllers/userController.js';
-// import foodController  from '../controllers/foodController.js';
-// import leaveApplicationController from '../controllers/leaveApplicationController.js';
-// import ingredientController from '../controllers/ingredientController.js';
-// import { authentication, checkRole } from '../middleware/JWTAction.js';
-// dotenv.config();
+import express from 'express';
+import dotenv from 'dotenv';
+import userController from '../controllers/userController.js';
+import foodController  from '../controllers/foodController.js';
+import shiftController from '../controllers/shiftController.js';
+import staffController from '../controllers/staffController.js';
+import recruitmentController from '../controllers/recruitmentController.js';
 
-// import staffController from '../controllers/staffController.js';
+import { authenticateToken, isAdmin, checkRole } from '../middleware/JWTAction.js';
+dotenv.config();
+
 
 // let router = express.Router();
 // let initWebRount = (app) => {
 //     //router.all("*", checkTokenWithCookie, checkAuthentication)
 
-//     //staff
-//     router.get("/staff", staffController.getAllStaff);
-//     router.get("/staff/position/:position", staffController.getStaffByPosition);
-//     router.get("/staff/type/:type", staffController.getStaffByType);
-//     router.post('/users/register', userController.register);
-//     router.post('/users/login', userController.login);
-//     router.get('/users/profile', authentication, userController.getProfile);
-//     router.put('/users/profile', authentication, userController.updateProfile);
-//     router.post('/users/add-points', authentication, isAdmin, userController.addPoints);
-//     router.get('/users/all', authentication, isAdmin, userController.getAllUsers);
+    //staff
+    router.get("/staff", staffController.getAllStaff);
+    router.get("/staff/position/:position", authenticateToken, staffController.getStaffByPosition);
+    router.get("/staff/type/:type", authenticateToken, staffController.getStaffByType);
+    router.post("/staff", authenticateToken, staffController.createStaff);
+    router.put("/staff", authenticateToken, staffController.updateStaff);
+    router.delete("/staff/:id", authenticateToken, staffController.deleteStaff);
+
+    //shift 
+    router.get("/shift", authenticateToken, shiftController.getAllShifts);
+    router.get("/shift/:id", authenticateToken, shiftController.getShiftsByStaffId);
+    router.get("/shiftdate", authenticateToken, shiftController.getShiftsByDateRange);
+    router.post("/shift", authenticateToken, shiftController.createShift);
+    router.put("/shift/:id", authenticateToken, shiftController.updateShift);
+
+    //recruitment
+    router.get("/recruitment", recruitmentController.getAllRecruitment);
+    router.get("/recruitment/:id", recruitmentController.getRecruitmentById);
+    router.post("/recruitment", authenticateToken, checkRole('admin','manager'), recruitmentController.createRecruitment);
+    router.put("/recruitment/:id", authenticateToken, checkRole('admin','manager'), recruitmentController.updateRecruitment);
+    router.delete("/recruitment/:id", authenticateToken, checkRole('admin','manager'), recruitmentController.deleteRecruitment);
+
+    router.post('/users/register', userController.register);
+    router.post('/users/login', userController.login);
+    router.get('/users/profile', authenticateToken, userController.getProfile);
+    router.put('/users/profile', authenticateToken, userController.updateProfile);
+    router.post('/users/add-points', authenticateToken, isAdmin, userController.addPoints);
+    router.get('/users/all', authenticateToken, isAdmin, userController.getAllUsers);
 
 //     router.get('/foods', foodController.getAllFoods);
 //     router.post('/foods',  authentication, checkRole('admin','manager'), foodController.createFood);

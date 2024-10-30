@@ -18,7 +18,11 @@ const recruimentSchema = new mongoose.Schema({
     describe: String,
     require: String,
     infomation: String,
-    type: String,
+    type: {
+        type: String,
+        enum: ['fulltime', 'parttime'],
+        default: 'fulltime',
+    },
     status: {
         type: String,
         enum: ['active', 'inactive'],
