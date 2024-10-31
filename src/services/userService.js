@@ -67,7 +67,7 @@ const loginUser = async (username, password) => {
             };
         }
 
-        const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
         const userObject = user.toObject();
         
         delete userObject.password;

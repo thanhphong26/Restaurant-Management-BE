@@ -15,7 +15,20 @@ export const authenticateToken = (req, res, next) => {
   }
 
   jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) return res.sendStatus(403);
+    if(err){
+      if(err.name === 'TokenExpiredError'){
+        return res.status(401).json({
+          EC: 401,
+          EM: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại",
+          DT: ""
+        });
+      }
+      return res.status(403).json({
+        EC: 403,
+        EM: "Token không hợp lệ",
+        DT: ""
+      });
+    }
     req.user = user;
     next();
   });

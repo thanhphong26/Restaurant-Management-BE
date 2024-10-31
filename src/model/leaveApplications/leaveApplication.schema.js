@@ -1,4 +1,4 @@
-import mongoose from "../mongoose/mongoose.js";
+import {mongoose, Schema} from 'mongoose';
 const leaveApplicationSchema = new mongoose.Schema({
     staff_id: {
         type: Schema.Types.ObjectId,

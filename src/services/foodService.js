@@ -103,7 +103,7 @@ const updateFood = async (foodId, foodData) => {
 };
 const deleteFood = async (foodId) => {
   try {
-    const deletedFood = await Food.findByIdAndDelete(foodId);
+    const deletedFood = await Food.findByIdAndUpdate(foodId, { status: 'inactive' }, { new: true });
     if (!deletedFood) {
         return {
             EC: 1,

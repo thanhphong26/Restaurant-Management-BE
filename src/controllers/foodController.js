@@ -18,7 +18,7 @@ const createFood = async (req, res) => {
 };
 const deleteFood = async (req, res) => {
     try {
-        const response = await foodService.deleteFood(req.params.foodId);
+        const response = await foodService.deleteFood(req.params.id);
         return res.status(200).json({
             EC: response.EC,
             EM: response.EM,

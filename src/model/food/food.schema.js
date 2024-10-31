@@ -21,8 +21,8 @@ const foodSchema = new mongoose.Schema({
       },
       status: {
         type: String,
-        enum: ['available', 'unavailable'],
-        default: 'available'
+        enum: ['active', 'inactive'],
+        default: 'active'
       }
 });
 const Food = mongoose.model("Food", foodSchema);

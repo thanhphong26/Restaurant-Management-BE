@@ -1,4 +1,4 @@
-import mongoose from "../mongoose/mongoose.js";
+import {mongoose, Schema} from 'mongoose';
 const timeKeepingSchema = new mongoose.Schema({
     staff_id: {
         type: Schema.Types.ObjectId,
@@ -13,7 +13,7 @@ const timeKeepingSchema = new mongoose.Schema({
     check_out: Date,
     status: {
         type: String,
-        enum: ['present', 'absent', 'late'],
+        enum: ['present', 'absent', 'late', 'early_leave'],
         default: 'absent',
     }
 });
