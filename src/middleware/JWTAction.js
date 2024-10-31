@@ -1,8 +1,7 @@
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = 'pntpnt0123456789'; // Replace with a secure secret key
-
-export const authenticateToken = (req, res, next) => {
+const JWT_SECRET = 'pntpnt0123456789'; 
+export const authentication = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 
@@ -34,12 +33,6 @@ export const authenticateToken = (req, res, next) => {
   });
 };
 
-export const isAdmin = (req, res, next) => {
-  if (req.user.role !== 'admin') {
-    return res.status(403).json({ message: 'Access denied. Admin only.' });
-  }
-  next();
-};
 export const checkRole = (...roles) => {
   return (req, res, next) => {
     if (!req.user) {
