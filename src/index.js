@@ -14,10 +14,14 @@ import initBookingRoute from './router/bookingRoute.js';
 dotenv.config();
 
 const app = express();
-app.use(corsConfig);
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+//Application-level middleware
+app.use(corsConfig); //Third-party middleware for CORS
+app.use(express.json()); //Built-in middleware for parsing JSON
+app.use(express.urlencoded({ extended: true })); //Built-in middleware for parsing URL-encoded data
 const port = process.env.PORT || 3000;
+
+//Router-level middleware
 initAuthRoute(app);
 initShiftRoute(app);
 initBookingRoute(app);

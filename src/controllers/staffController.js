@@ -24,9 +24,12 @@ const getAllStaff = async (req, res) => {
 
 const getStaffByPosition = async (req, res) => {
     try {
-        console.log(req.params.position);
-        if(req.params.position){
-            const response = await staffService.getStaffByPosition(req.params.position);
+        const page = req.query.page || 1;
+        const limit = req.query.limit || 10;
+        const search = req.query.search || "";
+        const position = req.query.position;
+        if(position){
+            const response = await staffService.getStaffByPosition(page, limit, search, position);
             return res.status(200).json({
                 EC: response.EC,
                 EM: response.EM,
@@ -51,8 +54,12 @@ const getStaffByPosition = async (req, res) => {
 
 const getStaffByType = async (req, res) => {
     try {
-        if(req.params.type){
-            const response = await staffService.getStaffByType(req.params.type);
+        const page = req.query.page || 1;
+        const limit = req.query.limit || 10;
+        const search = req.query.search || "";
+        const type = req.query.type;
+        if(type){
+            const response = await staffService.getStaffByType(page, limit, search, type);
             return res.status(200).json({
                 EC: response.EC,
                 EM: response.EM,
@@ -74,6 +81,33 @@ const getStaffByType = async (req, res) => {
         });
     }
 };
+
+const getStaffById = async (req, res) => {
+    try{
+        let staffId = req.params.id;
+        if(staffId){
+            let response = await staffService.getStaffById(staffId);
+            return res.status(200).json({
+                EC: response.EC,
+                EM: response.EM,
+                DT: response.DT
+            });
+        } else {
+            return res.status(400).json({
+                EC: 400,
+                EM: "Missing staff id",
+                DT: ""
+            });
+        }
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            EC: 500,
+            EM: "Error from server",
+            DT: ""
+        });
+    }
+}
 
 const createStaff = async (req, res) => {
     try {
@@ -98,9 +132,10 @@ const createStaff = async (req, res) => {
 
 const updateStaff = async (req, res) => {
     try {
+        let staffId = req.params.id;
         let staff = req.body;
-        if(staff && staff._id && staff.position && staff.salary && staff.type) {
-            let response = await staffService.updateStaff(staff._id, staff);
+        if(staff && staffId && staff.position && staff.salary && staff.type) {
+            let response = await staffService.updateStaff(staffId, staff);
             return res.status(200).json({
                 EC: response.EC,
                 EM: response.EM,
@@ -142,6 +177,7 @@ export default {
     getAllStaff,
     getStaffByPosition,
     getStaffByType,
+    getStaffById,
     createStaff,
     updateStaff,
     deleteStaff
