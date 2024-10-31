@@ -6,6 +6,7 @@ const getAllStaff = async (req, res) => {
         const limit = req.query.limit || 10;
         const search = req.query.search || "";
         const response = await staffService.getAllStaff(page, limit, search);
+
         return res.status(200).json({
             EC: response.EC,
             EM: response.EM,

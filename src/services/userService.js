@@ -2,6 +2,7 @@ import User from '../model/user/user.schema.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { status } from "../utils/index.js";
+import Staff from '../model/staff/staff.schema.js';
 
 const JWT_SECRET = 'pntpnt0123456789'; 
 
@@ -194,11 +195,64 @@ const getAllUsers = async () => {
     }
 };
 
+const registerStaff = async (staffData) => {
+    try {
+        let resgisterUserResponse = await registerUser({
+            username: staffData.username,
+            password: staffData.password,
+            role: staffData.role,
+            last_name: staffData.last_name,
+            first_name: staffData.first_name,
+            email: staffData.email,
+            cid: staffData.cid,
+            address: staffData.address,
+            phone_number: staffData.phone_number,
+            dob: staffData.dob
+        });
+
+        if (resgisterUserResponse.EC === 0) {
+            let staff = await Staff.create({
+                user_id: resgisterUserResponse.DT._id,
+                position: staffData.position,
+                salary: staffData.salary,
+                type: staffData.type,
+                point: 0,
+                status: status.ACTIVE
+            })
+
+            if(!staff) {
+                await User.findByIdAndDelete(resgisterUserResponse.DT._id);
+                return {
+                    EC: 1,
+                    EM: "Tạo nhân viên thất bại",
+                    DT: ""
+                }
+            } else {
+                return {
+                    EC: 0,
+                    EM: "Tạo nhân viên thành công",
+                    DT: staff
+                }
+            }
+        } else {
+            return resgisterUserResponse;
+        }
+    } catch (error) {
+        console.log(error);
+        return {
+            EC: 500,
+            EM: "Error from server :>>",
+            DT: ""
+        }
+    }
+}
+
 export default {
     registerUser,
     loginUser,
     getUserProfile,
     updateUserProfile,
     addPointsToUser,
-    getAllUsers
+    getAllUsers,
+    registerStaff
 };

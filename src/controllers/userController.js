@@ -145,11 +145,41 @@ const getAllUsers = async (req, res) => {
     }
 };
 
+const registerStaff = async (req, res) => {
+    try{
+        let staffData = req.body;
+        if(staffData && staffData.username && staffData.password && staffData.last_name && staffData.first_name 
+            && staffData.role && staffData.cid && staffData.email && staffData.phone_number && staffData.address
+            && staffData.position && staffData.salary && staffData.type){
+            let response = await userService.registerStaff(staffData);
+            return res.status(201).json({
+                EC: response.EC,
+                EM: response.EM,
+                DT: response.DT
+            });
+        }else{
+            return res.status(400).json({
+                EC: 400,
+                EM: "Dữ liệu không hợp lệ",
+                DT: ""
+            });
+        }
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            EC: 500,
+            EM: "Lỗi từ server",
+            DT: ""
+        });
+    }
+}
+
 export default {
     register,
     login,
     getProfile,
     updateProfile,
     addPoints,
-    getAllUsers
+    getAllUsers,
+    registerStaff
 };

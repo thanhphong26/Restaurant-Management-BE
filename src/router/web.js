@@ -5,6 +5,7 @@ import foodController  from '../controllers/foodController.js';
 import shiftController from '../controllers/shiftController.js';
 import staffController from '../controllers/staffController.js';
 import recruitmentController from '../controllers/recruitmentController.js';
+import promotionController from '../controllers/promotionController.js';
 
 import { authenticateToken, isAdmin, checkRole } from '../middleware/JWTAction.js';
 dotenv.config();
@@ -36,12 +37,19 @@ dotenv.config();
     router.put("/recruitment/:id", authenticateToken, checkRole('admin','manager'), recruitmentController.updateRecruitment);
     router.delete("/recruitment/:id", authenticateToken, checkRole('admin','manager'), recruitmentController.deleteRecruitment);
 
+    //promotion
+    router.get("/promotions", promotionController.getAllPromotions);
+    router.post("/promotions", promotionController.createPromotion);
+    router.put("/promotions/:id", promotionController.updatePromotion);
+    router.delete("/promotions/:id", promotionController.deletePromotion);
+
     router.post('/users/register', userController.register);
     router.post('/users/login', userController.login);
     router.get('/users/profile', authenticateToken, userController.getProfile);
     router.put('/users/profile', authenticateToken, userController.updateProfile);
     router.post('/users/add-points', authenticateToken, isAdmin, userController.addPoints);
     router.get('/users/all', authenticateToken, isAdmin, userController.getAllUsers);
+    router.post('/users/register-staff', userController.registerStaff);
 
 //     router.get('/foods', foodController.getAllFoods);
 //     router.post('/foods',  authentication, checkRole('admin','manager'), foodController.createFood);

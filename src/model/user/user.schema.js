@@ -40,6 +40,10 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    dob: {
+        type: Date,
+        required: true,
+    },
     avatar: {
         type: String,
         default: "https://cdn.iconscout.com/icon/free/png-256/avatar-370-456322.png",
