@@ -1,13 +1,18 @@
-import mongoose from "../mongoose/mongoose.js";
+import { mongoose, Schema } from "mongoose";
 const notificationSchema = new mongoose.Schema({
     type: {
         type: String,
+        enum: ['shift', 'booking'], //shift: thông báo xin nghỉ, booking: thông báo đặt bàn
         required: true,
     },
     message: {
         type: String,
         required: true,
     },
+    list_receiver: [{
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+    }],
     status: {
         type: String,
         enum: ['read', 'unread'],
