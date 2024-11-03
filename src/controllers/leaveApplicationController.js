@@ -59,71 +59,72 @@ const updateStatusLeaveApplication = async (req, res) => {
 //     }
 // };
 
-const checkIn=async (req,res)=>{
-    try{
-        const response=await leaveApplicationService.checkIn(req.body.staff_id);
+const checkIn = async (req, res) => {
+    try {
+        const response = await leaveApplicationService.checkIn(req.query.staff_id);
         return res.status(200).json({
-            EC:response.EC,
-            EM:response.EM,
-            DT:response.DT
+            EC: response.EC,
+            EM: response.EM,
+            DT: response.DT
         });
-    }catch(error){
+    } catch (error) {
         console.log(error);
         return res.status(500).json({
-            EC:500,
-            EM:"Error from server",
-            DT:""
+            EC: 500,
+            EM: "Error from server",
+            DT: ""
         });
     }
 }
-const checkOut=async (req,res)=>{
-    try{
-        const response=await leaveApplicationService.checkOut(req.body.staff_id);
+const checkOut = async (req, res) => {
+    try {
+        const response = await leaveApplicationService.checkOut(req.query.staff_id);
+        console.log("response: ", response);
         return res.status(200).json({
-            EC:response.EC,
-            EM:response.EM,
-            DT:response.DT
+            EC: response.EC,
+            EM: response.EM,
+            DT: response.DT
         });
-    }catch(error){
+    } catch (error) {
         console.log(error);
         return res.status(500).json({
-            EC:500,
-            EM:"Error from server",
-            DT:""
+            EC: 500,
+            EM: "Error from server",
+            DT: ""
         });
     }
 }
-const getTimeKeepingInMonth=async (req,res)=>{
-    try{
-        const response=await leaveApplicationService.getTimeKeepingInMonth(req.params.staff_id,req.params.month, req.params.year);
+const getTimeKeepingInMonth = async (req, res) => {
+    try {
+        const response = await leaveApplicationService.getTimeKeepingInMonth(req.params.staff_id, req.params.month, req.params.year);
         return res.status(200).json({
-            EC:response.EC,
-            EM:response.EM,
-            DT:response.DT
+            EC: response.EC,
+            EM: response.EM,
+            DT: response.DT
         });
-    }catch(error){
+    } catch (error) {
         console.log(error);
         return res.status(500).json({
-            EC:500,
-            EM:"Error from server",
-            DT:""
+            EC: 500,
+            EM: "Error from server",
+            DT: ""
         });
     }
 }
-const getListLeaveApplication=async (req,res)=>{
-    try{
-        const response=await leaveApplicationService.getListLeaveApplication(req.params.staff_id,req.params.status,req.params.start_date,req.params.end_date);
+const getListLeaveApplication = async (req, res) => {
+    try {
+        const response = await leaveApplicationService.getListLeaveApplication(req.params.staff_id, req.params.status, req.params.start_date, req.params.end_date);
         return res.status(200).json({
-            EC:response.EC,
-            EM:response.EM,
-            DT:response.DT
+            EC: response.EC,
+            EM: response.EM,
+            DT: response.DT
         });
-    }catch(error){
+    } catch (error) {
         console.log(error);
         return res.status(500).json({
-            EC:500,
-            EM:"Error from server",
-            DT:""
+            EC: 500,
+            EM: "Error from server",
+            DT: ""
         });
     }
 }

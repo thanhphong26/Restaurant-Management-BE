@@ -2,23 +2,25 @@ import LeaveApplication from '../model/leaveApplications/leaveApplication.schema
 import TimeKeeping from '../model/timeKeeping/timeKeeping.schema.js';
 import Shift from '../model/shift/shift.schema.js';
 import Staff from '../model/staff/staff.schema.js';
+import { DateTime } from 'luxon';
+import { zone } from '../utils/constraints.js';
 const createLeaveApplication = async (leaveApplication) => {
-    try{
+    try {
         const allowFields = ['staff_id', 'start_date', 'end_date', 'reason'];
         const sanitizedData = {};
         Object.keys(leaveApplication).forEach(key => {
-            if(allowFields.includes(key)){
+            if (allowFields.includes(key)) {
                 sanitizedData[key] = leaveApplication[key];
             }
         });
-        if(!sanitizedData.staff_id || !sanitizedData.start_date || !sanitizedData.end_date || !sanitizedData.reason){
+        if (!sanitizedData.staff_id || !sanitizedData.start_date || !sanitizedData.end_date || !sanitizedData.reason) {
             return {
                 EC: 1,
                 EM: 'Thiếu thông tin bắt buộc',
                 DT: ''
             };
         }
-        if(new Date(sanitizedData.start_date) > new Date(sanitizedData.end_date) || new Date(sanitizedData.start_date) < new Date()){
+        if (new Date(sanitizedData.start_date) > new Date(sanitizedData.end_date) || new Date(sanitizedData.start_date) < new Date()) {
             return {
                 EC: 1,
                 EM: 'Ngày ngghỉ và ngày làm việc lại không hợp lí',
@@ -36,7 +38,7 @@ const createLeaveApplication = async (leaveApplication) => {
             ],
             status: { $ne: 'rejected' }
         });
-        if(existingLeaveApplication){
+        if (existingLeaveApplication) {
             return {
                 EC: 400,
                 EM: 'Đã có đơn xin nghỉ trong khoản thời gian trên',
@@ -50,7 +52,7 @@ const createLeaveApplication = async (leaveApplication) => {
             EM: 'Tạo đơn xin nghỉ thành công',
             DT: newLeaveApplication
         };
-    }catch(error){
+    } catch (error) {
         console.log(error);
         return {
             EC: 500,
@@ -60,9 +62,9 @@ const createLeaveApplication = async (leaveApplication) => {
     }
 };
 const updateStatusLeaveApplication = async (leaveApplicationId, status) => {
-    try{
+    try {
         const leaveApplication = await LeaveApplication.findByIdAndUpdate(leaveApplicationId, { status }, { new: true });
-        if(!leaveApplication){
+        if (!leaveApplication) {
             return {
                 EC: 404,
                 EM: 'Không tìm thấy đơn xin nghỉ',
@@ -74,7 +76,7 @@ const updateStatusLeaveApplication = async (leaveApplicationId, status) => {
             EM: 'Cập nhật trạng thái đơn xin nghỉ thành công',
             DT: leaveApplication
         };
-    }catch(error){
+    } catch (error) {
         console.log(error);
         return {
             EC: 500,
@@ -147,55 +149,56 @@ const updateStatusLeaveApplication = async (leaveApplicationId, status) => {
 //     }
 // }
 //checkin
-const checkIn=async (staffId)=>{
-    try{
-        const today = new Date();
-        const currentTime = new Date(today.getTime() + (7 * 60 * 60 * 1000));    
-        const startOfDay = new Date(
-            currentTime.getFullYear(),
-            currentTime.getMonth(),
-            currentTime.getDate(),
-            0, 0, 0
-        );
-        const endOfDay = new Date(
-            currentTime.getFullYear(),
-            currentTime.getMonth(),
-            currentTime.getDate(),
-            23, 59, 59
-        );    
-        const existingTimeKeeping = await TimeKeeping.findOne({
+const getCurrentDate = () => {
+    const today = DateTime.now().setZone(zone);
+
+    const day = today.get('day');
+    const month = today.get('month'); // Tháng bắt đầu từ 0 nên cần +1
+    const year = today.get('year');
+
+    return { day, month, year };
+};
+const checkIn = async (staffId) => {
+    try {
+        //const { day, month, year } = getCurrentDate();
+        const today = DateTime.now().setZone(zone);
+        console.log('Today', today);
+        let shift = await Shift.findOne({
+            date: today.startOf('day'),
+            list_staff: staffId
+        })
+        if (!shift) {
+            return {
+                EC: 404,
+                EM: 'Nhân viên không có ca làm việc hôm nay',
+                DT: ''
+            };
+        }
+        let timeKeeping = await TimeKeeping.findOne({
             staff_id: staffId,
-            date: {
-                $gte: startOfDay,
-                $lt: endOfDay
-            }
+            date: today.startOf('day')
         });
-        if(existingTimeKeeping){
+        if (timeKeeping) {
             return {
                 EC: 400,
                 EM: 'Nhân viên đã check in',
                 DT: ''
             };
         }
-        const newTimeKeeping = new TimeKeeping({
-            staff_id: staffId,
-            date: currentTime,
-            check_in: currentTime,
-            status: 'present'
-        });
-        //check late
-        const checkInTime = currentTime.getHours() * 60 + currentTime.getMinutes();
-        const startWorkTime = 8 * 60 + 30;
-        if(checkInTime > startWorkTime){
-            newTimeKeeping.status = 'late';
+        else {
+            let check_in = await TimeKeeping.create({
+                staff_id: staffId,
+                date: today.startOf('day'),
+                check_in: today,
+            })
+            return {
+                EC: 0,
+                EM: 'Check in thành công',
+                DT: check_in
+            };
         }
-        await newTimeKeeping.save();
-        return {
-            EC: 200,
-            EM: 'Check in thành công',
-            DT: newTimeKeeping
-        };
-    }catch(error){
+
+    } catch (error) {
         console.log(error);
         return {
             EC: 500,
@@ -205,71 +208,30 @@ const checkIn=async (staffId)=>{
     }
 }
 //checkout
-const checkOut=async (staffId)=>{
-    try{
-        const today = new Date();
-        console.log('Today', today.getTime());
-        const currentTime = new Date(today.getTime() + (7 * 60 * 60 * 1000));    
-        const startOfDay = new Date(
-            currentTime.getFullYear(),
-            currentTime.getMonth(),
-            currentTime.getDate(),
-            0, 0, 0
-        );
-        const endOfDay = new Date(
-            currentTime.getFullYear(),
-            currentTime.getMonth(),
-            currentTime.getDate(),
-            23, 59, 59
-        );        
-        const existingTimeKeeping = await TimeKeeping.findOne({
+const checkOut = async (staffId) => {
+    try {
+        const today = DateTime.now().setZone(zone);
+        let timeKeeping = await TimeKeeping.findOneAndUpdate({
             staff_id: staffId,
-            date: {
-                $gte: startOfDay,
-                $lt: endOfDay
-            }
-        });
-        if(!existingTimeKeeping){
+            date: today.startOf('day'),
+            check_out: null
+        },
+            { $set: { check_out: today } },
+            { new: true });
+        if (!timeKeeping) {
             return {
-                EC: 404,
-                EM: 'Nhân viên chưa check in trong ngày hôm nay',
+                EC: 1,
+                EM: 'Nhân viên chưa check in hoặc đã check out',
                 DT: ''
-            };
-        }
-        if(existingTimeKeeping.check_out){
-            return {
-                EC: 400,
-                EM: 'Nhân viên đã check out',
-                DT: ''
-            };
-        }
-        existingTimeKeeping.check_out = currentTime;
-        const checkInTime = new Date(existingTimeKeeping.check_in);
-        const checkOutTime = new Date(existingTimeKeeping.check_out);
-        const workingMinutes = Math.floor((checkOutTime - checkInTime) / (1000 * 60));
-        existingTimeKeeping.working_time = workingMinutes;
-
-        const earlyLeaveThreshold = new Date(today.getTime() + (7 * 60 * 60 * 1000));
-        earlyLeaveThreshold.setHours(17, 30, 0, 0);
-        console.log('Early leave', checkOutTime, earlyLeaveThreshold);
-
-        // First check if leaving early
-        if (checkOutTime < earlyLeaveThreshold) {
-            if (existingTimeKeeping.status === 'late') {
-                existingTimeKeeping.status = 'late_and_early_leave';
-            } else {
-                existingTimeKeeping.status = 'early_leave';
             }
-        } 
-       
-        await existingTimeKeeping.save();
-
-        return {
-            EC: 200,
-            EM: 'Check out thành công',
-            DT: existingTimeKeeping
-        };
-    }catch(error){
+        } else {
+            return {
+                EC: 0,
+                EM: 'Check out thành công',
+                DT: timeKeeping
+            }
+        }
+    } catch (error) {
         console.log(error);
         return {
             EC: 500,
@@ -280,8 +242,8 @@ const checkOut=async (staffId)=>{
 }
 //get timekeeping in month
 const getTimeKeepingInMonth = async (staffId, month, year) => {
-    try{
-        
+    try {
+
         const startDate = new Date(year, month - 1, 1);
         const endDate = new Date(year, month, 0);
 
@@ -306,7 +268,7 @@ const getTimeKeepingInMonth = async (staffId, month, year) => {
             EM: 'Lấy danh sách chấm công thành công',
             DT: timeKeepingList, statistics
         };
-    }catch(error){
+    } catch (error) {
         console.log(error);
         return {
             EC: 500,
@@ -317,14 +279,14 @@ const getTimeKeepingInMonth = async (staffId, month, year) => {
 };
 //get list leave application
 const getListLeaveApplication = async (staffId, status, start_date, end_date) => {
-    try{
+    try {
         const filter = {
             staff_id: staffId
         };
-        if(status){
+        if (status) {
             filter.status = status;
         }
-        if(start_date && end_date){
+        if (start_date && end_date) {
             filter.start_date = { $gte: new Date(start_date), $lte: new Date(end_date) };
         }
         const leaveApplicationList = await LeaveApplication.find(filter).sort({ start_date: 1 });
@@ -333,7 +295,7 @@ const getListLeaveApplication = async (staffId, status, start_date, end_date) =>
             EM: 'Lấy danh sách đơn xin nghỉ thành công',
             DT: leaveApplicationList
         };
-    }catch(error){
+    } catch (error) {
         console.log(error);
         return {
             EC: 500,
