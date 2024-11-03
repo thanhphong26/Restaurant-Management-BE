@@ -12,7 +12,6 @@ export const authentication = (req, res, next) => {
       DT: ""
     });
   }
-
   jwt.verify(token, JWT_SECRET, (err, user) => {
     if(err){
       if(err.name === 'TokenExpiredError'){
@@ -32,7 +31,6 @@ export const authentication = (req, res, next) => {
     next();
   });
 };
-
 export const checkRole = (...roles) => {
   return (req, res, next) => {
     if (!req.user) {

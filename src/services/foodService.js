@@ -1,9 +1,45 @@
 import Food from '../model/food/food.schema.js';
 const createFood = async (foodData) => {
     try {
-      const newFood = new Food(foodData);
+        const allowFields = ['name', 'description', 'price', 'type', 'status', 'image'];
+        const sanitizedData = {};
+        Object.keys(foodData).forEach((field) => {
+            if (allowFields.includes(field)) {
+                sanitizedData[field] = foodData[field];
+            }
+        });
+        if (Object.keys(sanitizedData).length === 0) {
+            return {
+                EC: 1,
+                EM: 'Dữ liệu không hợp lệ',
+                DT: ''
+            };
+        }
+        if (!sanitizedData.name || !sanitizedData.image || !sanitizedData.price || !sanitizedData.type || !sanitizedData.status) {
+            return {
+                EC: 1,
+                EM: 'Không được để trống thông tin món ăn',
+                DT: ''
+            };
+        }
+        if (sanitizedData.price < 0) {
+            return {
+                EC: 1,
+                EM: 'Giá tiền không hợp lệ',
+                DT: ''
+            };
+        }
+        if (!['active', 'inactive'].includes(sanitizedData.status)) {
+            return {
+                EC: 1,
+                EM: 'Trạng thái không hợp lệ',
+                DT: ''
+            };
+        }
+
+      const newFood = new Food(sanitizedData);
       //validate exist food
-        const existingFood = await Food.findOne({ name: foodData.name });
+        const existingFood = await Food.findOne({ name: sanitizedData.name });
         if (existingFood) {
             return {
                 EC: 1,
@@ -79,6 +115,48 @@ const getFoodById = async (foodId) => {
 };
 const updateFood = async (foodId, foodData) => {
   try {
+    const allowFields=['name', 'image', 'description', 'price', 'type', 'status'];
+    const updateData = {};
+    Object.keys(foodData).forEach((field) => {
+        if(allowFields.includes(field)){
+            updateData[field] = foodData[field];
+        }
+    }
+    );
+    if(Object.keys(updateData).length === 0){
+        return {
+            EC: 1,
+            EM: 'Dữ liệu cập nhật không hợp lệ',
+            DT: ''
+        };
+    }
+    if(updateData.name !== undefined){
+        const existingFood = await Food.findOne({
+            name: foodData.name,
+            _id: { $ne: foodId }
+          });
+        if (existingFood) {
+            return {
+                EC: 1,
+                EM: 'Món ăn đã tồn tại',
+                DT: ''
+            };
+        }
+    }
+    if(updateData.price !== undefined && updateData.price < 0){
+        return {
+            EC: 1,
+            EM: 'Giá tiền không hợp lệ',
+            DT: ''
+        };
+    }
+    if (updateData.status !== undefined && !['active', 'inactive'].includes(updateData.status)) {
+        return {
+          EC: 1,
+          EM: 'Trạng thái không hợp lệ',
+          DT: ''
+        };
+      }
     const updatedFood = await Food.findByIdAndUpdate(foodId, updateData, { new: true });
     if (!updatedFood) {
         return {
@@ -180,6 +258,13 @@ const getFoodsByType=async(type)=>{
 };
 const searchFoods=async(query)=>{
   try {
+    if (!query || typeof query !== 'string') {
+        return {
+          EC: 1,
+          EM: 'Từ khóa tìm kiếm không hợp lệ',
+          DT: ''
+        };
+      }
     const foods = await Food.find({
         $or: [
             { name: { $regex: query, $options: 'i' } },

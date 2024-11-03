@@ -13,7 +13,7 @@ const timeKeepingSchema = new mongoose.Schema({
     check_out: Date,
     status: {
         type: String,
-        enum: ['present', 'absent', 'late', 'early_leave'],
+        enum: ['present', 'absent', 'late', 'early_leave', 'late_with_overtime', 'overtime', 'late_and_early_leave'],
         default: 'absent',
     }
 });

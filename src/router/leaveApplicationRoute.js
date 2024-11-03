@@ -6,10 +6,10 @@ dotenv.config();
 let router = express.Router();
 let initLeaveApplicationRoute = (app) => {
     //leave application
-    router.post("", authentication, leaveApplicationController.createLeaveApplication);
-    router.put("/update-status-leave-application/:id", authentication, checkRole('admin', 'manager'), leaveApplicationController.updateStatusLeaveApplication);
-    router.put("/check-in", authentication, leaveApplicationController.checkIn);
-    router.put("/check-out", authentication, leaveApplicationController.checkOut);
+    router.post("", authentication, checkRole('staff', 'manager'), leaveApplicationController.createLeaveApplication);
+    router.put("/:id", authentication, checkRole('admin', 'manager'), leaveApplicationController.updateStatusLeaveApplication);
+    router.put("/check-in", authentication, checkRole('staff', 'manager'), leaveApplicationController.checkIn);
+    router.put("/check-out", authentication, checkRole('staff', 'manager'), leaveApplicationController.checkOut);
     router.get("/time-keeping", authentication, checkRole('admin','manager'), leaveApplicationController.getTimeKeepingInMonth);
     router.get("", authentication, checkRole('admin','manager'), leaveApplicationController.getListLeaveApplication);
     

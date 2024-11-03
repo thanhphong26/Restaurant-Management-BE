@@ -33,6 +33,32 @@ const updateStatusLeaveApplication = async (req, res) => {
         });
     }
 };
+// const handleCheckPresence = async (req, res) => {
+//     try {
+//         const {date}=req.query;
+//         if(!date){
+//             return res.status(400).json({
+//                 EC: 400,
+//                 EM: "Dữ liệu không hợp lệ",
+//                 DT: ""
+//             });
+//         }
+//         const response = await leaveApplicationService.checkStaffInShiftIsPresent(req.query.date);
+//         return res.status(200).json({
+//             EC: response.EC,
+//             EM: response.EM,
+//             DT: response.DT
+//         });
+//     } catch (error) {
+//         console.log(error);
+//         return res.status(500).json({
+//             EC: 500,
+//             EM: "Error from server",
+//             DT: ""
+//         });
+//     }
+// };
+
 const checkIn=async (req,res)=>{
     try{
         const response=await leaveApplicationService.checkIn(req.body.staff_id);
@@ -108,4 +134,5 @@ export default {
     checkOut,
     getTimeKeepingInMonth,
     getListLeaveApplication
+    // handleCheckPresence
 };

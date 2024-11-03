@@ -3,9 +3,45 @@ import Ingredient from "../model/ingredients/ingredient.schema.js";
 import UpdateIngredient from "../model/updateIngredient/updateIngredient.schema.js";
 const createIngredient = async (ingredientData) => { 
     try {
-        const newIngredient = new Ingredient(ingredientData);
+        //validate input data
+        const allowFields=['name','inventory','unit','description','type','status'];
+        const sanitizedData={};
+        Object.keys(ingredientData).forEach((field)=>{
+            if(allowFields.includes(field)){
+                sanitizedData[field]=ingredientData[field];
+            }
+        });
+        if(Object.keys(sanitizedData).length===0){
+            return {
+                EC: 1,
+                EM: 'Dữ liệu không hợp lệ',
+                DT: ''
+            };
+        }
+        if(!sanitizedData.name||!sanitizedData.inventory||!sanitizedData.unit||!sanitizedData.type||!sanitizedData.status){
+            return {
+                EC: 1,
+                EM: 'Không được để trống thông tin nguyên liệu',
+                DT: ''
+            };
+        }
+        if(sanitizedData.inventory<0){
+            return {
+                EC: 1,
+                EM: 'Tồn kho không hợp lệ',
+                DT: ''
+            };
+        }
+        if(!['active','inactive'].includes(sanitizedData.status)){
+            return {
+                EC: 1,
+                EM: 'Trạng thái không hợp lệ',
+                DT: ''
+            };
+        }
+        const newIngredient = new Ingredient(sanitizedData);
         //validate exist ingredient
-        const existingIngredient = await Ingredient.findOne({ name: ingredientData.name });
+        const existingIngredient = await Ingredient.findOne({ name: sanitizedData.name });
         if (existingIngredient) {
             return {
                 EC: 1,
@@ -30,6 +66,48 @@ const createIngredient = async (ingredientData) => {
 }
 const updateIngredient = async (ingredientId, ingredientData) => {
     try {
+        const allowFields=['ingredient_id', 'quantity', 'date', 'supplier', 'expiration_date', 'price', 'type'];
+        const sanitizedData={};
+        Object.keys(ingredientData).forEach((field)=>{
+            if(allowFields.includes(field)){
+                sanitizedData[field]=ingredientData[field];
+            }
+        });
+        if(Object.keys(sanitizedData).length===0){
+            return {
+                EC: 1,
+                EM: 'Dữ liệu không hợp lệ',
+                DT: ''
+            };
+        }
+        if(sanitizedData.quantity<0){
+            return {
+                EC: 1,
+                EM: 'Số lượng không hợp lệ',
+                DT: ''
+            };
+        }
+        if(sanitizedData.price<0){
+            return {
+                EC: 1,
+                EM: 'Giá tiền không hợp lệ',
+                DT: ''
+            };
+        }
+        if(sanitizedData.expiration_date&&new Date(sanitizedData.expiration_date)<new Date()){
+            return {
+                EC: 1,
+                EM: 'Ngày hết hạn không hợp lệ',
+                DT: ''
+            };
+        }
+        if(sanitizedData.type&&sanitizedData.type!=='import'&&sanitizedData.type!=='export'){
+            return {
+                EC: 1,
+                EM: 'Loại cập nhật không hợp lệ',
+                DT: ''
+            };
+        }
         const ingredient = await Ingredient.findById(ingredientId);
         if (!ingredient) {
             return {
@@ -38,7 +116,7 @@ const updateIngredient = async (ingredientId, ingredientData) => {
                 DT: ''
             };
         }
-        const updatedIngredient = await Ingredient.findByIdAndUpdate(ingredientId, ingredientData, { new: true });
+        const updatedIngredient = await Ingredient.findByIdAndUpdate(ingredientId, sanitizedData, { new: true });
         return {
             EC: 0,
             EM: 'Cập nhật nguyên liệu thành công',

@@ -7,7 +7,7 @@ let router = express.Router();
 let initStaffRoute = (app) => {
    
     router.get("", staffController.getAllStaff);
-    router.get("/by-position", authentication, checkRole('admin','manager'), staffController.getStaffByPosition);
+    router.get("/by-position",  staffController.getStaffByPosition);
     router.get("/by-type", authentication, checkRole('admin','manager'), staffController.getStaffByType);
     router.get("/:id", staffController.getStaffById);
     router.post("", authentication, checkRole('admin','manager'), staffController.createStaff);
