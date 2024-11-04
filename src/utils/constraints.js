@@ -3,4 +3,4 @@ export const status = {
     INACTIVE: 'inactive'
 }
 export const zone = "Asia/Ho_Chi_Minh"
-export const shift = [8, 14, 20]
+export const shiftNumber = [0, 8, 14, 20, 2]

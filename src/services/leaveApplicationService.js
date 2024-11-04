@@ -3,7 +3,7 @@ import TimeKeeping from '../model/timeKeeping/timeKeeping.schema.js';
 import Shift from '../model/shift/shift.schema.js';
 import Staff from '../model/staff/staff.schema.js';
 import { DateTime } from 'luxon';
-import { zone } from '../utils/constraints.js';
+import { shiftNumber, status, zone } from '../utils/constraints.js';
 const createLeaveApplication = async (leaveApplication) => {
     try {
         const allowFields = ['staff_id', 'start_date', 'end_date', 'reason'];
@@ -149,24 +149,16 @@ const updateStatusLeaveApplication = async (leaveApplicationId, status) => {
 //     }
 // }
 //checkin
-const getCurrentDate = () => {
-    const today = DateTime.now().setZone(zone);
 
-    const day = today.get('day');
-    const month = today.get('month'); // Tháng bắt đầu từ 0 nên cần +1
-    const year = today.get('year');
-
-    return { day, month, year };
-};
-const checkIn = async (staffId) => {
+const checkIn = async (staffId, shiftId) => {
     try {
-        //const { day, month, year } = getCurrentDate();
         const today = DateTime.now().setZone(zone);
-        console.log('Today', today);
+        // console.log('Start today: ', today.startOf('day'), staffId);
         let shift = await Shift.findOne({
             date: today.startOf('day'),
-            list_staff: staffId
+            list_staff: staffId,
         })
+        // console.log('shift: ', shift);
         if (!shift) {
             return {
                 EC: 404,
@@ -176,7 +168,7 @@ const checkIn = async (staffId) => {
         }
         let timeKeeping = await TimeKeeping.findOne({
             staff_id: staffId,
-            date: today.startOf('day')
+            shift_id: shiftId,
         });
         if (timeKeeping) {
             return {
@@ -186,10 +178,17 @@ const checkIn = async (staffId) => {
             };
         }
         else {
+            const date = DateTime.fromJSDate(shift.date).setZone(zone)
+            // lấy thời gian làm việc của ca ngày check in
+            const start_shift = DateTime.local(date.get('year'), date.get('month'), date.get('day'), shiftNumber[shift.shift_number]).setZone(zone);
+            // const today = DateTime.local(date.get('year'), date.get('month'), date.get('day'), 8, 6).setZone(zone);
+            // Tính khoảng thời gian giữa thời gian hiện tại và time_shift
+            const diff = today.diff(start_shift, ['hours', 'minutes', 'seconds']);
             let check_in = await TimeKeeping.create({
                 staff_id: staffId,
-                date: today.startOf('day'),
+                shift_id: shiftId,
                 check_in: today,
+                status_check_in: diff.minutes < 0 ? 'early' : diff.minutes <= 5 ? 'ontime' : 'late'
             })
             return {
                 EC: 0,
@@ -208,15 +207,30 @@ const checkIn = async (staffId) => {
     }
 }
 //checkout
-const checkOut = async (staffId) => {
+const checkOut = async (staffId, shiftId) => {
     try {
+
         const today = DateTime.now().setZone(zone);
+        let shift = await Shift.findOne({
+            date: today.startOf('day'),
+            list_staff: staffId
+        })
+        const date = DateTime.fromJSDate(shift.date).setZone(zone)
+        const end_shift = DateTime.local(date.get('year'), date.get('month'), date.get('day'), shiftNumber[shift.shift_number + 1]).setZone(zone);
+        // const day = DateTime.local(date.get('year'), date.get('month'), date.get('day'), 13, 50).setZone(zone);
+        // Tính khoảng thời gian giữa thời gian hiện tại và time_shift
+        const diff = today.diff(end_shift, ['hours', 'minutes', 'seconds']);
         let timeKeeping = await TimeKeeping.findOneAndUpdate({
             staff_id: staffId,
-            date: today.startOf('day'),
-            check_out: null
+            check_out: null,
+            shift_id: shiftId
         },
-            { $set: { check_out: today } },
+            {
+                $set: {
+                    check_out: today,
+                    status_check_out: diff.minutes < 0 ? 'early' : diff.hours < 1 ? 'ontime' : 'late'
+                }
+            },
             { new: true });
         if (!timeKeeping) {
             return {

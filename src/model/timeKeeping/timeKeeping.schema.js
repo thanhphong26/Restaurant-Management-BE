@@ -5,8 +5,9 @@ const timeKeepingSchema = new mongoose.Schema({
         ref: 'Staff',
         required: true,
     },
-    date: {
-        type: Date,
+    shift_id: {
+        type: Schema.Types.ObjectId,
+        ref: 'Shift',
         required: true,
     },
     check_in: Date,
@@ -14,11 +15,26 @@ const timeKeepingSchema = new mongoose.Schema({
         type: Date,
         default: null,
     },
-    status: {
+    status_check_in: {
         type: String,
-        enum: ['present', 'absent', 'late', 'early_leave', 'late_with_overtime', 'overtime', 'late_and_early_leave'],
-        default: 'absent',
+        enum: ['ontime', 'late', 'early'],
+    },
+    status_check_out: {
+        type: String,
+        enum: ['ontime', 'late', 'early'],
+        default: null,
     }
 });
 const TimeKeeping = mongoose.model("TimeKeeping", timeKeepingSchema);
 export default TimeKeeping;
+
+
+/*
+    check in và check out sẽ theo shift
+    nếu check in trước thời gian thì là early
+    nếu check in trễ 5' thì là ontime
+    nếu check in sau thời gian đó thì là late
+
+    nếu check out trước thời gian thì là early
+    nếu check out trễ 1h thì là ontime
+*/
