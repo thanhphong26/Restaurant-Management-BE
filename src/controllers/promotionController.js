@@ -1,11 +1,33 @@
 import promotionService from "../services/promotionService.js";
 
-const getAllPromotions = async (req, res) => {
+const getAllPromotionsValid = async (req, res) => {
     try {
         let page = req.query.page || 1;
         let limit = req.query.limit || 10;
         let search = req.query.search || '';
-        let response = await promotionService.getAllPromotions(page, limit, search);
+        let response = await promotionService.getAllPromotionsValid(page, limit, search);
+        return res.status(200).json({
+            EC: response.EC,
+            EM: response.EM,
+            DT: response.DT
+        })
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            EC: 500,
+            EM: "Error from server",
+            DT: ""
+        });
+    }
+}
+
+const getPromotionValidByUserId = async (req, res) => {
+    try {
+        let userId = req.query.id;
+        let page = req.query.page || 1;
+        let limit = req.query.limit || 10;
+        let search = req.query.search || '';
+        let response = await promotionService.getPromotionValidByUserId(userId, page, limit, search);
         return res.status(200).json({
             EC: response.EC,
             EM: response.EM,
@@ -91,7 +113,8 @@ const deletePromotion = async (req, res) => {
 }
 
 export default {
-    getAllPromotions,
+    getAllPromotionsValid,
+    getPromotionValidByUserId,
     createPromotion,
     updatePromotion,
     deletePromotion

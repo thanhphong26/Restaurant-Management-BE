@@ -6,3 +6,4 @@ const corsConfig = cors({
     credentials: true,
 });
 export default corsConfig;
+

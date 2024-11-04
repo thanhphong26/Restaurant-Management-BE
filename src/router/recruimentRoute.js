@@ -12,6 +12,6 @@ let initRecruimentRoute = (app) => {
     router.put("/:id", authentication, checkRole('admin','manager'), recruitmentController.updateRecruitment);
     router.delete("/:id", authentication, checkRole('admin','manager'), recruitmentController.deleteRecruitment);
     
-    return app.use("/api/recruiments", router);
+    return app.use("/api/recruitment", router);
 }
 export default initRecruimentRoute;
