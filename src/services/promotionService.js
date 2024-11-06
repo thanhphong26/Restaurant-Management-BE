@@ -9,6 +9,7 @@ const getAllPromotionsValid = async (page, limit, search) => {
             {
                 $match: {
                     status: status.ACTIVE,
+                    quantity: { $gt: 0 },
                     startDate: { $lte: new Date() },
                     endDate: { $gte: new Date() },
                     ...(search && {
@@ -66,6 +67,7 @@ const getPromotionValidByUserId = async (userId, page, limit, search) => {
             {
                 $match: {
                     status: status.ACTIVE,
+                    quantity: { $gt: 0 },
                     startDate: { $lte: new Date() },
                     endDate: { $gte: new Date() },
                     code: { $nin: savedVouchers },  // Exclude saved vouchers
@@ -111,7 +113,10 @@ const createPromotion = async (promotion) => {
         let newPromotion = await Promotion.create({
             code: promotion.code,
             description: promotion.description,
+            quantity: promotion.quantity || 0,
             discount: promotion.discount,
+            condition: promotion.condition || 0,
+            type: promotion.type,
             startDate: promotion.startDate,
             endDate: promotion.endDate,
             status: status.ACTIVE
@@ -137,6 +142,9 @@ const updatePromotion = async (promotionId, promotion) => {
         let updatePromotion = await Promotion.findByIdAndUpdate(promotionId, {
             description: promotion.description,
             discount: promotion.discount,
+            quantity: promotion.quantity || 0,
+            condition: promotion.condition || 0,
+            type: promotion.type,
             startDate: promotion.startDate,
             endDate: promotion.endDate
         }, { new: true })

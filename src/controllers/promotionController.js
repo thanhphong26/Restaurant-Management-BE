@@ -46,7 +46,8 @@ const getPromotionValidByUserId = async (req, res) => {
 const createPromotion = async (req, res) => {
     try {
         let promotion = req.body;
-        if (promotion && promotion.code && promotion.description && promotion.discount && promotion.startDate && promotion.endDate) {
+        if (promotion && promotion.code && promotion.description && promotion.type
+            && promotion.discount && promotion.startDate && promotion.endDate) {
             let response = await promotionService.createPromotion(promotion);
             return res.status(200).json({
                 EC: response.EC,
@@ -69,7 +70,8 @@ const updatePromotion = async (req, res) => {
         let promotionId = req.params.id;
         let promotion = req.body;
         console.log(promotion);
-        if (promotion && promotion.description && promotion.discount && promotion.startDate && promotion.endDate) {
+        if (promotion && promotion.description && promotion.discount && promotion.type
+            && promotion.startDate && promotion.endDate) {
             let response = await promotionService.updatePromotion(promotionId, promotion);
             return res.status(200).json({
                 EC: response.EC,
