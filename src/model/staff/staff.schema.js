@@ -1,4 +1,5 @@
-import mongoose from "../mongoose/mongoose.js";
+import { Schema, mongoose } from "mongoose";
+
 const staffSchema = new mongoose.Schema({
     user_id: {
         type: Schema.Types.ObjectId,
@@ -8,6 +9,7 @@ const staffSchema = new mongoose.Schema({
     position: {
         type: String,
         required: true,
+        enum: ['admin', 'waiter', 'chef', 'manager', 'cashier'],
     },
     salary: {
         type: Number,

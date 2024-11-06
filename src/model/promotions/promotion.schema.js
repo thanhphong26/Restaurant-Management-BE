@@ -1,4 +1,4 @@
-import mongoose from "../mongoose/mongoose.js";
+import mongoose from "mongoose";
 const promotionSchema = new mongoose.Schema({
     code: {
         type: String,

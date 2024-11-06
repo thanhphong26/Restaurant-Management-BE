@@ -1,4 +1,4 @@
-import mongoose from "../mongoose/mongoose.js";
+import { Schema, mongoose } from "mongoose";
 const userSchema = new mongoose.Schema({
     username: {
         type: String,
@@ -12,7 +12,7 @@ const userSchema = new mongoose.Schema({
     role: {
         type: String,
         required: true,
-        enum: ["admin", "customer", "staff","manager"],
+        enum: ["admin", "customer", "staff", "manager"],
     },
     last_name: {
         type: String,
@@ -38,6 +38,10 @@ const userSchema = new mongoose.Schema({
     },
     phone_number: {
         type: String,
+        required: true,
+    },
+    dob: {
+        type: Date,
         required: true,
     },
     avatar: {

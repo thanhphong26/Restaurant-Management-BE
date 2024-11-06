@@ -1,4 +1,4 @@
-import mongoose from "../mongoose/mongoose.js";
+import mongoose from "mongoose";
 const foodSchema = new mongoose.Schema({
     name: {
         type: String,
@@ -21,8 +21,8 @@ const foodSchema = new mongoose.Schema({
       },
       status: {
         type: String,
-        enum: ['available', 'unavailable'],
-        default: 'available'
+        enum: ['active', 'inactive'],
+        default: 'active'
       }
 });
 const Food = mongoose.model("Food", foodSchema);

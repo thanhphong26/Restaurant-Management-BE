@@ -1,10 +1,6 @@
-import mongoose from "../mongoose/mongoose.js";
+import mongoose from "mongoose";
+import mongoosePaginate from "mongoose-paginate-v2";
 const ingredientSchema = new mongoose.Schema({
-    ingredient_id: {
-        type: Schema.Types.ObjectId,
-        ref: 'Ingredient',
-        required: true,
-    },
     name: {
         type: String,
         required: true,
@@ -14,6 +10,11 @@ const ingredientSchema = new mongoose.Schema({
         type: Number,
         required: true,
         min: 0,
+    },
+    unit: {
+        type: String,
+        enum: ['kg', 'l'],
+        required: true,
     },
     description: String,
     type: {
@@ -25,6 +26,7 @@ const ingredientSchema = new mongoose.Schema({
         enum: ['active', 'inactive'],
         default: 'active',
     }
-});
+}, { timestamps: true});
+ingredientSchema.plugin(mongoosePaginate);
 const Ingredient = mongoose.model("Ingredient", ingredientSchema);
 export default Ingredient;

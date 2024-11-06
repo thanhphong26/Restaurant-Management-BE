@@ -1,4 +1,5 @@
-import mongoose from "../mongoose/mongoose.js";
+import { Schema, mongoose } from "mongoose";
+
 const recruimentSchema = new mongoose.Schema({
     position: {
         type: String,
@@ -17,7 +18,16 @@ const recruimentSchema = new mongoose.Schema({
     describe: String,
     require: String,
     infomation: String,
-    type: String,
+    type: {
+        type: String,
+        enum: ['fulltime', 'parttime'],
+        default: 'fulltime',
+    },
+    status: {
+        type: String,
+        enum: ['active', 'inactive'],
+        default: 'active',
+    }
 });
 const Recruiment = mongoose.model("Recruiment", recruimentSchema);
 export default Recruiment;
