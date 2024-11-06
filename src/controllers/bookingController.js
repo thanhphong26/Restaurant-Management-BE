@@ -33,11 +33,12 @@ const getAllBookings = async (req, res) => {
 }
 const createBooking = async (req, res) => {
     try {
+        const { table, booking } = req.body;
         let response = {};
         if (req.user.role === 'staff') {
-            response = await bookingService.createBookingWithTableId(req.user.id, req.body);
+            response = await bookingService.createBookingWithTableId(req.user.id, req.body.booking);
         } else {
-            response = await bookingService.createBooking(req.user.id, req.body);
+            response = await bookingService.createBooking(req.user.id, table, booking);
         }
         return res.status(200).json({
             EC: response.EC,
@@ -73,7 +74,7 @@ const getBookingById = async (req, res) => {
 }
 const createComment = async (req, res) => {
     try {
-        let response = await bookingService.createComment(req.body);
+        let response = await bookingService.createComment(req.query.bookingId, req.user.id, req.body);
         return res.status(200).json({
             EC: response.EC,
             EM: response.EM,
@@ -88,9 +89,9 @@ const createComment = async (req, res) => {
         });
     }
 }
-const updateListStaff = async (req, res) => {
+const updateBooking = async (req, res) => {
     try {
-        let response = await bookingService.updateListStaff(req.query.bookingId, req.body);
+        let response = await bookingService.updateBooking(req.query.bookingId, req.body);
         return res.status(200).json({
             EC: response.EC,
             EM: response.EM,
@@ -122,11 +123,29 @@ const getOrderDetailByBookingId = async (req, res) => {
         });
     }
 }
+const getAllBookingsByPhoneNumber = async (req, res) => {
+    try {
+        let response = await bookingService.getAllBookingsByPhoneNumber(req.query.phone_number);
+        return res.status(200).json({
+            EC: response.EC,
+            EM: response.EM,
+            DT: response.DT
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            EC: 500,
+            EM: "Error from server",
+            DT: "",
+        });
+    }
+}
 export default {
     getAllBookings,
     createBooking,
     getBookingById,
     createComment,
-    updateListStaff,
-    getOrderDetailByBookingId
+    updateBooking,
+    getOrderDetailByBookingId,
+    getAllBookingsByPhoneNumber,
 }

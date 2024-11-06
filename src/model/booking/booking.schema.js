@@ -1,5 +1,4 @@
 import { Schema, mongoose } from "mongoose";
-import Order from "../order/order.schema.js";
 const bookingSchema = new mongoose.Schema({
   user_id: {
     type: Schema.Types.ObjectId,

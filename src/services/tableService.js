@@ -52,8 +52,44 @@ const deleteTable = async (id) => {
         }
     }
 }
+const getAllTable = async () => {
+    try {
+        const tables = await Table.find();
+        return {
+            EC: 0,
+            EM: "Lấy danh sách bàn thành công",
+            DT: tables
+        }
+    } catch (error) {
+        console.log(error);
+        return {
+            EC: 500,
+            EM: "Error from server",
+            DT: "",
+        }
+    }
+}
+const getOneTable = async (id) => {
+    try {
+        const table = await Table.findById(id);
+        return {
+            EC: 0,
+            EM: "Lấy thông tin bàn thành công",
+            DT: table
+        }
+    } catch (error) {
+        console.log(error);
+        return {
+            EC: 500,
+            EM: "Error from server",
+            DT: "",
+        }
+    }
+}
 export default {
     createTable,
     updateTable,
-    deleteTable
+    deleteTable,
+    getAllTable,
+    getOneTable,
 }

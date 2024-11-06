@@ -10,7 +10,11 @@ const tableSchema = new mongoose.Schema({
     required: true,
     min: 1
   },
-  type: String,
+  type: {
+    type: String,
+    enum: ['normal', 'VIP'],
+    required: true
+  },
   tip: {
     type: Number,
     default: 0

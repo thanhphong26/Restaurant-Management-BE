@@ -161,8 +161,8 @@ const checkIn = async (staffId, shiftId) => {
         // console.log('shift: ', shift);
         if (!shift) {
             return {
-                EC: 404,
-                EM: 'Nhân viên không có ca làm việc hôm nay',
+                EC: 1,
+                EM: 'Bạn không có ca làm việc hôm nay',
                 DT: ''
             };
         }

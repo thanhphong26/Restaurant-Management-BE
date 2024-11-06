@@ -6,7 +6,8 @@ dotenv.config();
 let router = express.Router();
 let initTableRoute = (app) => {
     router.post('', authentication, checkRole('manager'), tableController.createTable); //tạo booking cho khách hàng           
-
-    return app.use("/api/table/", router);
+    router.put('', authentication, checkRole('staff'), tableController.updateTable);                       //lấy danh sách booking userId hoặc adminId
+    router.get('', authentication, checkRole('staff'), tableController.getAllTable);
+    return app.use("/api/table", router);
 }
 export default initTableRoute;
