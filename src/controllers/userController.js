@@ -36,6 +36,14 @@ const login = async (req, res) => {
             });
         }
         const response = await userService.loginUser(username, password);
+        if (response.EC === 0) {
+            res.cookie('refreshToken', response.DT.refreshToken, {
+                httpOnly: true,
+                secure: true, // Set to true if using HTTPS
+                sameSite: 'strict',
+                maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+            });
+        }
         return res.status(200).json({
             EC: response.EC,
             EM: response.EM,
@@ -50,7 +58,31 @@ const login = async (req, res) => {
         });
     }
 };
-
+const refreshToken = async (req, res) => {
+    try {
+        const refreshToken = req.cookies?.refreshToken;
+        if (!refreshToken) {
+            return res.status(400).json({
+                EC: 400,
+                EM: "Không được để trống refreshToken",
+                DT: ""
+            });
+        }
+        const response = await userService.refreshToken(refreshToken);
+        return res.status(200).json({
+            EC: response.EC,
+            EM: response.EM,
+            DT: response.DT
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            EC: 500,
+            EM: "Lỗi từ server",
+            DT: ""
+        });
+    }
+};
 const getProfile = async (req, res) => {
     try {
         if (!req.user?.id) {
@@ -173,7 +205,57 @@ const registerStaff = async (req, res) => {
         });
     }
 }
-
+const forgotPassword = async (req, res) => {
+    try {
+        console.log(req.body);
+        const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({
+                EC: 400,
+                EM: "Không được để trống email",
+                DT: ""
+            });
+        }
+        const response = await userService.forgotPassword(email);
+        return res.status(200).json({
+            EC: response.EC,
+            EM: response.EM,
+            DT: response.DT
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            EC: 500,
+            EM: "Lỗi từ server",
+            DT: ""
+        });
+    }
+};
+const resetPassword = async (req, res) => {
+    try {
+        const {password, token } = req.body;
+        if ( !password || !token) {
+            return res.status(400).json({
+                EC: 400,
+                EM: "Không được để trống email, mật khẩu hoặc token",
+                DT: ""
+            });
+        }
+        const response = await userService.resetPassword(token, password);
+        return res.status(200).json({
+            EC: response.EC,
+            EM: response.EM,
+            DT: response.DT
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            EC: 500,
+            EM: "Lỗi từ server",
+            DT: ""
+        });
+    }
+};
 export default {
     register,
     login,
@@ -181,5 +263,8 @@ export default {
     updateProfile,
     addPoints,
     getAllUsers,
-    registerStaff
+    registerStaff,
+    refreshToken,
+    forgotPassword,
+    resetPassword
 };
