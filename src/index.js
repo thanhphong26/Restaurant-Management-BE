@@ -15,6 +15,7 @@ import initTimeKeepingRoute from './router/timeKeepingRoute.js';
 import initPromotionRoute from './router/promotionRoute.js';
 import initApplicationRoute from './router/applicationRoute.js';
 import initRecruimentRoute from './router/recruimentRoute.js';
+import initTableRoute from './router/tableRoute.js';
 dotenv.config();
 
 const app = express();
@@ -38,9 +39,11 @@ initTimeKeepingRoute(app);
 initPromotionRoute(app);
 initApplicationRoute(app);
 initRecruimentRoute(app);
+initTableRoute(app);
+initBookingRoute(app);
 
 app.get('/', (req, res) => {
-    res.send('Hello World 123' );
+    res.send('Hello World 123');
 });
 
 app.listen(port, () => {

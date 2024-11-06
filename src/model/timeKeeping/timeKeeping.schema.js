@@ -9,6 +9,7 @@ const timeKeepingSchema = new mongoose.Schema({
         type: Schema.Types.ObjectId,
         ref: 'Shift',
         required: true,
+        default: Date.now,
     },
     check_in: Date,
     check_out: {
@@ -25,6 +26,7 @@ const timeKeepingSchema = new mongoose.Schema({
         default: null,
     }
 });
+
 const TimeKeeping = mongoose.model("TimeKeeping", timeKeepingSchema);
 export default TimeKeeping;
 
