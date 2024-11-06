@@ -3,7 +3,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { status } from "../utils/index.js";
 import Staff from '../model/staff/staff.schema.js';
-
+import sendEmail from './sendMailService.js';
 const JWT_SECRET = 'pntpnt0123456789'; 
 
 const registerUser = async (userData) => {
@@ -68,15 +68,18 @@ const loginUser = async (username, password) => {
             };
         }
 
-        const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+        const accessToken = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '24h' });
+        const refreshToken= jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+        user.refreshToken.push(refreshToken);
         const userObject = user.toObject();
         
         delete userObject.password;
+        delete userObject.refreshToken;
         delete userObject.__v;
         return {
             EC: 0,
             EM: 'Đăng nhập thành công',
-            DT: { token, user: userObject }
+            DT: { accessToken, refreshToken, user: userObject }
         };
 
     } catch (error) {
@@ -88,7 +91,44 @@ const loginUser = async (username, password) => {
         };
     }
 };
-
+//refresh token when token expired return new access token , new refresh token and save new refresh token to user and delete old refresh token
+const refreshToken = async (refreshToken) => {
+    try {
+        const decoded = jwt.verify(refreshToken, JWT_SECRET);
+        const user = await User.findById(decoded.id);
+        if (!user) {
+            return {
+                EC: 1,
+                EM: 'Không tìm thấy thông tin user',
+                DT: ''
+            };
+        }
+        if (!user.refreshToken.includes(refreshToken)) {
+            return {
+                EC: 1,
+                EM: 'Invalid token',
+                DT: ''
+            };
+        }
+        const accessToken = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '24h' });
+        const newRefreshToken = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+        user.refreshToken = user.refreshToken.filter(token => token !== refreshToken);
+        user.refreshToken.push(newRefreshToken);
+        await user.save();
+        return {
+            EC: 0,
+            EM: 'Cập nhật token thành công',
+            DT: { accessToken, refreshToken: newRefreshToken }
+        };
+    } catch (error) {
+        console.log(error);
+        return {
+            EC: 500,
+            EM: 'Error from server',
+            DT: ''
+        };
+    }
+};
 const getUserProfile = async (userId) => {
     try {
         const user = await User.findById(userId).select('-password');
@@ -246,7 +286,89 @@ const registerStaff = async (staffData) => {
         }
     }
 }
+//forgot password send email template contains link to reset password
+const forgotPassword = async (email) => {
+    try {
+        console.log("Email: ", email);
+        const user = await User.findOne({
+            email
+        });
+        if (!user) {
+            return {
+                EC: 1,
+                EM: 'Email không tồn tại',
+                DT: ''
+            };
+        }
+            const resetToken = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '1h' });
 
+            user.resetPasswordToken = resetToken;
+            user.resetPasswordExpire = Date.now() + 3600000; 
+            await user.save();
+    
+            // Tạo link reset password
+            const resetLink = `http://localhost:3000/reset-password?token=${resetToken}`;
+    
+            // Gửi email chứa link reset password
+            await sendEmail({
+                to: user.email,
+                subject: 'Đặt lại mật khẩu',
+                html: `
+                    <p>Chào bạn,</p>
+                    <p>Bạn đã yêu cầu đặt lại mật khẩu. Vui lòng click vào link bên dưới để thiết lập mật khẩu mới:</p>
+                    <a href="${resetLink}">Đặt lại mật khẩu</a>
+                    <p>Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này.</p>
+                    <p>Trân trọng,<br>
+                    Đội ngũ hỗ trợ</p>
+                `
+            });
+            return {
+                EC: 0,
+                EM: 'Gửi email thành công',
+                DT: ''
+            };
+        }
+    catch (error) {
+        console.log(error);
+        return {
+            EC: 500,
+            EM: 'Error from server',
+            DT: ''
+        };
+    }
+}
+const resetPassword = async (resetToken, newPassword) => {
+    try {
+        const decoded = jwt.verify(resetToken, JWT_SECRET);
+        const user = await User.findById(decoded.id);
+        if (!user) {
+            return {
+                EC: 1,
+                EM: 'Token không hợp lệ',
+                DT: ''
+            };
+        }
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+        user.password = hashedPassword;
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpire = undefined;
+        await user.save();
+        return {
+            EC: 0,
+            EM: 'Đặt lại mật khẩu thành công',
+            DT: ''
+        };
+    }
+    catch (error) {
+        console.log(error);
+        return {
+            EC: 500,
+            EM: 'Error from server',
+            DT: ''
+        };
+    }
+}
 export default {
     registerUser,
     loginUser,
@@ -254,5 +376,8 @@ export default {
     updateUserProfile,
     addPointsToUser,
     getAllUsers,
-    registerStaff
+    registerStaff,
+    refreshToken,
+    forgotPassword,
+    resetPassword
 };

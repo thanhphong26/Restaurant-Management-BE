@@ -42,7 +42,6 @@ const userSchema = new mongoose.Schema({
     },
     dob: {
         type: Date,
-        required: true,
     },
     avatar: {
         type: String,
@@ -60,6 +59,9 @@ const userSchema = new mongoose.Schema({
         type: Array,
         default: [],
     },
+    refreshToken: [String],
+    resetPasswordToken: String,
+    resetPasswordExpire: Date,
     }
 );
 const User = mongoose.model("User", userSchema);
