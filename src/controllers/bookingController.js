@@ -140,6 +140,23 @@ const getAllBookingsByPhoneNumber = async (req, res) => {
         });
     }
 }
+const payment = async (req, res) => {
+    try {
+        let response = await bookingService.payment(req.query.bookingId, req.body);
+        return res.status(200).json({
+            EC: response.EC,
+            EM: response.EM,
+            DT: response.DT
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            EC: 500,
+            EM: "Error from server",
+            DT: "",
+        });
+    }
+}
 export default {
     getAllBookings,
     createBooking,
@@ -148,4 +165,5 @@ export default {
     updateBooking,
     getOrderDetailByBookingId,
     getAllBookingsByPhoneNumber,
+    payment
 }
