@@ -47,6 +47,7 @@ initTableRoute(app);
 initBookingRoute(app);
 initReportRoute(app);
 initPaymentRoute(app);
+
 app.get('/', (req, res) => {
     res.send('Hello World 123');
 });
