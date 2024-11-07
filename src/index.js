@@ -16,6 +16,7 @@ import initPromotionRoute from './router/promotionRoute.js';
 import initApplicationRoute from './router/applicationRoute.js';
 import initRecruimentRoute from './router/recruimentRoute.js';
 import initTableRoute from './router/tableRoute.js';
+import initReportRoute from './router/reportRoute.js';
 dotenv.config();
 
 const app = express();
@@ -41,7 +42,7 @@ initApplicationRoute(app);
 initRecruimentRoute(app);
 initTableRoute(app);
 initBookingRoute(app);
-
+initReportRoute(app);
 app.get('/', (req, res) => {
     res.send('Hello World 123');
 });
