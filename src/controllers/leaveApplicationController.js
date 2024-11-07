@@ -61,7 +61,7 @@ const updateStatusLeaveApplication = async (req, res) => {
 
 const checkIn = async (req, res) => {
     try {
-        const response = await leaveApplicationService.checkIn(req.user?.id, req.query.shift_id);
+        const response = await leaveApplicationService.checkIn(req.body.staff_id, req.query.shift_id);
         return res.status(200).json({
             EC: response.EC,
             EM: response.EM,

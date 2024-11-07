@@ -153,7 +153,7 @@ const updateStatusLeaveApplication = async (leaveApplicationId, status) => {
 const checkIn = async (staffId, shiftId) => {
     try {
         const today = DateTime.now().setZone(zone);
-        // console.log('Start today: ', today.startOf('day'), staffId);
+        console.log('Start today: ', today.startOf('day'), staffId);
         let shift = await Shift.findOne({
             date: today.startOf('day'),
             list_staff: staffId,
@@ -188,7 +188,7 @@ const checkIn = async (staffId, shiftId) => {
                 staff_id: staffId,
                 shift_id: shiftId,
                 check_in: today,
-                status_check_in: diff.minutes < 0 ? 'early' : diff.minutes <= 5 ? 'ontime' : 'late'
+                status_check_in: diff.minutes < 0 ? 'ontime' : 'late'
             })
             return {
                 EC: 0,
