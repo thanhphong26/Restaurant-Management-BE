@@ -11,6 +11,21 @@ const registerUser = async (userData) => {
         const existingUser = await User.findOne({
             $or: [{ username: userData.username }, { email: userData.email }, { cid: userData.cid }]
         });
+        //validate input data
+        if (!userData.username || !userData.password || !userData.last_name || !userData.first_name || !userData.email || !userData.cid || !userData.address || !userData.phone_number || !userData.dob) {
+            return {
+                EC: 1,
+                EM: 'Vui lòng điền đầy đủ thông tin',
+                DT: ''
+            };
+        }
+        if (userData.password.length < 6) {
+            return {
+                EC: 1,
+                EM: 'Mật khẩu phải có ít nhất 6 ký tự',
+                DT: ''
+            };
+        }
 
         if (existingUser) {
             return {
@@ -28,7 +43,7 @@ const registerUser = async (userData) => {
             password: hashedPassword,
             status: status.ACTIVE
         });
-
+        newUser.role='customer';
         await newUser.save();
 
         return {

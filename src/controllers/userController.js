@@ -176,7 +176,6 @@ const getAllUsers = async (req, res) => {
         });
     }
 };
-
 const registerStaff = async (req, res) => {
     try {
         let staffData = req.body;
