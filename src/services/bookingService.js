@@ -268,7 +268,6 @@ const payment = async (id, data) => {
                         DT: ""
                     }
                 } else {
-                    console.log("Code:", Code);
                     // thực hiện cập nhật promotion, booking, user 
                     let promotion = await Promotion.findByIdAndUpdate(Code._id, { $inc: { quantity: -1 } }, { new: true });
                     let booking = await Booking.findByIdAndUpdate(id, { $set: { ...data, payment_status: 'paid' } }, { new: true });
@@ -314,8 +313,26 @@ const payment = async (id, data) => {
         }
     }
 }
+const getAllBookingByUserId = async (id) => {
+    try {
+        let bookings = await Booking.find({ user_id: id });
+        return {
+            EC: 0,
+            EM: "Lấy thông tin booking thành công",
+            DT: bookings
+        }
+    } catch (error) {
+        console.log(error);
+        return {
+            EC: 500,
+            EM: "Error from server",
+            DT: "",
+        }
+    }
+}
 export default {
     getAllBookings,
+    getAllBookingByUserId,
     createBooking,
     getBookingById,
     createComment,
