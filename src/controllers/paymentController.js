@@ -1,21 +1,32 @@
-import { generateVNPayUrl, verifyReturnUrl } from '../services/vnpay.js';
+import bookingService from '../services/bookingService.js';
+import paymentService from '../services/paymentService.js';
 
-export const createPayment = (req, res) => {
-    const { amount, orderId, orderInfo } = req.body;
+const createPayment = async (req, res) => {
+    try {
+        let response = await paymentService.createPayment(req.query.bookingId, req.body);
+        return res.status(200).json(response);
+    } catch (error) {
+        return res.status(500).json({
+            EC: 1,
+            EM: 'Internal Server Error',
+            DT: ""
+        });
 
-    const paymentUrl = generateVNPayUrl(amount, orderId, orderInfo);
-
-    res.json({ paymentUrl });
-};
-
-export const handleReturnUrl = (req, res) => {
-    const query = req.query;
-
-    const isValid = verifyReturnUrl(query);
-
-    if (isValid) {
-        res.json({ message: 'Payment verified successfully', data: query });
-    } else {
-        res.status(400).json({ message: 'Invalid payment response' });
     }
-};
+}
+const callbackPayment = async (req, res) => {
+    // cập nhật dữ liệu vào database ()
+    const { amount, extraData, payType } = req.body;
+    let [bookingId, voucher] = extraData.split(" ");
+    // cập nhật dữ liệu vào database
+    const data = {
+        voucher,
+        payment_method: payType,
+        amount: amount
+    }
+    await bookingService.payment(bookingId, data);
+}
+export default {
+    createPayment,
+    callbackPayment
+}
