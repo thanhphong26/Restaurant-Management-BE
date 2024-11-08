@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { status } from "../utils/index.js";
 import Staff from '../model/staff/staff.schema.js';
 import sendEmail from './sendMailService.js';
+import { authentication } from '../middleware/JWTAction.js';
 const JWT_SECRET = 'pntpnt0123456789'; 
 
 const registerUser = async (userData) => {
@@ -86,6 +87,7 @@ const loginUser = async (username, password) => {
         const accessToken = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '24h' });
         const refreshToken= jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
         user.refreshToken.push(refreshToken);
+        await user.save();
         const userObject = user.toObject();
         
         delete userObject.password;
@@ -121,7 +123,7 @@ const refreshToken = async (refreshToken) => {
         if (!user.refreshToken.includes(refreshToken)) {
             return {
                 EC: 1,
-                EM: 'Invalid token',
+                EM: 'Xác thực không thành công',
                 DT: ''
             };
         }
@@ -136,7 +138,13 @@ const refreshToken = async (refreshToken) => {
             DT: { accessToken, refreshToken: newRefreshToken }
         };
     } catch (error) {
-        console.log(error);
+        if (error.name === 'TokenExpiredError') {
+            return {
+                EC: 1,
+                EM: 'Xác thực không thành công. Vui lòng đăng nhập lại',
+                DT: ''
+            };
+        }
         return {
             EC: 500,
             EM: 'Error from server',
@@ -202,38 +210,22 @@ const updateUserProfile = async (userId, updateData) => {
         };
     }
 };
-
-const addPointsToUser = async (userId, points) => {
+const getAllUsers = async (query = {}, page = 1, limit = 10) => {
     try {
-        const updatedUser = await User.findByIdAndUpdate(userId, { $inc: { point: points } }, { new: true }).select('-password');
-        
-        if (!updatedUser) {
-            return {
-                EC: 1,
-                EM: 'Người dùng không tồn tại',
-                DT: ''
-            };
+        const options = {
+            page: parseInt(page),
+            limit: parseInt(limit),
+            sort: { createdAt: -1 },
+            select: '-password'
+        };
+        const filter = {};
+        if (query.username) {
+            filter.username = { $regex: query.username, $options: 'i' };
         }
-
-        return {
-            EC: 0,
-            EM: 'Thêm điểm thành công',
-            DT: updatedUser
-        };
-
-    } catch (error) {
-        console.log(error);
-        return {
-            EC: 500,
-            EM: 'Error from server',
-            DT: ''
-        };
-    }
-};
-
-const getAllUsers = async () => {
-    try {
-        const users = await User.find().select('-password');
+        if (query.email) {
+            filter.email = { $regex: query.email, $options: 'i' };
+        }
+        const users = await User.paginate(filter, options);
         return {
             EC: 0,
             EM: 'Lấy tất cả người dùng thành công',
@@ -249,7 +241,36 @@ const getAllUsers = async () => {
         };
     }
 };
+const logoutUser = async (userId, refreshToken) => {
+    try {
+        const user = await User.findById(userId);
 
+        if (!user) {
+            return {
+                EC: 1,
+                EM: 'Người dùng không tồn tại',
+                DT: ''
+            };
+        }
+
+        user.refreshToken = user.refreshToken.filter(token => token !== refreshToken);
+        await user.save();
+
+        return {
+            EC: 0,
+            EM: 'Đăng xuất thành công',
+            DT: ''
+        };
+
+    } catch (error) {
+        console.log(error);
+        return {
+            EC: 500,
+            EM: 'Error from server',
+            DT: ''
+        };
+    }
+};
 const registerStaff = async (staffData) => {
     try {
         let resgisterUserResponse = await registerUser({
@@ -315,7 +336,7 @@ const forgotPassword = async (email) => {
                 DT: ''
             };
         }
-            const resetToken = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '1h' });
+            const resetToken = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '30m' });
 
             user.resetPasswordToken = resetToken;
             user.resetPasswordExpire = Date.now() + 3600000; 
@@ -344,7 +365,6 @@ const forgotPassword = async (email) => {
             };
         }
     catch (error) {
-        console.log(error);
         return {
             EC: 500,
             EM: 'Error from server',
@@ -355,11 +375,19 @@ const forgotPassword = async (email) => {
 const resetPassword = async (resetToken, newPassword) => {
     try {
         const decoded = jwt.verify(resetToken, JWT_SECRET);
-        const user = await User.findById(decoded.id);
+        //validate token is expired or not
+        if (!decoded) {
+            return {
+                EC: 1,
+                EM: 'Thời gian thực hiện đổi password đã hết. Vui lòng thực hiện lại',
+                DT: ''
+            };
+        }
+        const user = await User.findById(decoded.id, );
         if (!user) {
             return {
                 EC: 1,
-                EM: 'Token không hợp lệ',
+                EM: 'Đã xảy ra lỗi xác thực. Vui lòng thực hiện lại',
                 DT: ''
             };
         }
@@ -376,7 +404,13 @@ const resetPassword = async (resetToken, newPassword) => {
         };
     }
     catch (error) {
-        console.log(error);
+        if (error.name === 'TokenExpiredError') {
+            return {
+                EC: 1,
+                EM: 'Thời gian thực hiện đổi password đã hết. Vui lòng thực hiện lại',
+                DT: ''
+            };
+        }
         return {
             EC: 500,
             EM: 'Error from server',
@@ -389,10 +423,10 @@ export default {
     loginUser,
     getUserProfile,
     updateUserProfile,
-    addPointsToUser,
     getAllUsers,
     registerStaff,
     refreshToken,
     forgotPassword,
-    resetPassword
+    resetPassword,
+    logoutUser
 };

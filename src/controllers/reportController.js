@@ -29,6 +29,16 @@ const getRevenue = async (req, res) => {
         });
     }
 }
+const getRevenueIngredients = async (req, res) => {
+    try {
+        const { year, quarter, month, sortBy = 'totalRevenue', order = 'desc', page = 1, limit = 10 } = req.query;
+        const report = await reportService.getIngredientRevenueReport(year, quarter, month, sortBy, order, page, limit);
+        res.status(200).json(report);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Error generating revenue report' });
+    }
+}
 export default {
-    getRevenue,
+    getRevenue, getRevenueIngredients
 };

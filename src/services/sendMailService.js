@@ -24,8 +24,7 @@ const sendEmail= async (options) => {
     
         console.log('Email sent');
       } catch (error) {
-        console.log(error);
-        throw new Error('Failed to send email');
+        throw new Error('Đã xảy ra lỗi trong quá trình gửi email');
       }
     };
 export default sendEmail;
