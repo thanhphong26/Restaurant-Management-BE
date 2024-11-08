@@ -67,12 +67,21 @@ const updateApplication = async (req, res) => {
     try {
         let applicationId = req.params.id;
         let application = req.body;
-        let response = await applicationService.updateApplication(applicationId, application);
-        return res.status(200).json({
-            EC: response.EC,
-            EM: response.EM,
-            DT: response.DT
-        })
+        if(application && application.status && applicationId) {
+            let response = await applicationService.updateApplication(applicationId, application);
+            return res.status(200).json({
+                EC: response.EC,
+                EM: response.EM,
+                DT: response.DT
+            
+            })
+        } else {
+            return res.status(400).json({
+                EC: 400,
+                EM: "Missing information",
+                DT: ""
+            });
+        }
     } catch (error) {
         console.log(error);
         return res.status(500).json({
