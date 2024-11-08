@@ -165,32 +165,6 @@ const createBookingWithTableId = async (id, booking) => {
                 EM: "Tạo đặt lịch thành công",
                 DT: newBooking
             }
-        } else {
-            //check booking table with today
-            let bookingToday = await Booking.findOne({ table_id: booking.table_id, date: booking.date });
-            if (bookingToday) {
-                return {
-                    EC: 1,
-                    EM: "Bàn đã được đặt trong ngày",
-                    DT: ""
-                }
-            }
-            else {
-                let order_detail = [];
-                //Tạo order
-                if (booking?.order_detail?.length) {
-                    //có đặt món
-                    const list_order = await orderService.createOrder(booking.order_detail);
-                    order_detail = list_order.DT.map(item => item._id);
-                }
-                // lấy mảng id món ăn để tạo booking
-                let newBooking = await Booking.create({ ...booking, user_id: id, order_detail });
-                return {
-                    EC: 0,
-                    EM: "Tạo đặt lịch thành công",
-                    DT: newBooking
-                }
-            }
         }
     }
 }
