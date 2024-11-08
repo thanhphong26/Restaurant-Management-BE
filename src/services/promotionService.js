@@ -23,7 +23,10 @@ const getAllPromotionsValid = async (page, limit, search) => {
                     promotionId: '$_id',
                     code: 1,
                     description: 1,
+                    quantity: 1,
                     discount: 1,
+                    condition: 1,
+                    type: 1,
                     startDate: 1,
                     endDate: 1
                 }
@@ -82,7 +85,10 @@ const getPromotionValidByUserId = async (userId, page, limit, search) => {
                     promotionId: '$_id',
                     code: 1,
                     description: 1,
+                    quantity: 1,
                     discount: 1,
+                    condition: 1,
+                    type: 1,
                     startDate: 1,
                     endDate: 1
                 }
@@ -110,6 +116,16 @@ const getPromotionValidByUserId = async (userId, page, limit, search) => {
 
 const createPromotion = async (promotion) => {
     try {
+        const existingPromotion = await Promotion.findOne({ code: promotion.code });
+
+        if (existingPromotion) {
+            return {
+                EC: 400,
+                EM: "Mã khuyến mãi đã tồn tại",
+                DT: "",
+            };
+        }
+
         let newPromotion = await Promotion.create({
             code: promotion.code,
             description: promotion.description,
