@@ -58,6 +58,25 @@ const login = async (req, res) => {
         });
     }
 };
+const logout= async (req, res) => {
+    try {
+        const refreshToken = req.cookies?.refreshToken;
+        const userId=req.user?.id;
+        const response = await userService.logoutUser(userId,refreshToken);
+        return res.status(200).json({
+            EC: response.EC,
+            EM: response.EM,
+            DT: response.DT
+        });
+    }catch (error) {
+        return res.status(500).json({
+            EC: 500,
+            EM: "Lỗi từ server",
+            DT: ""
+        });
+    }
+}
+
 const refreshToken = async (req, res) => {
     try {
         const refreshToken = req.cookies?.refreshToken;
@@ -161,7 +180,8 @@ const addPoints = async (req, res) => {
 
 const getAllUsers = async (req, res) => {
     try {
-        const response = await userService.getAllUsers();
+        const { page, limit, ...query } = req.query;
+        const response = await userService.getAllUsers(query, page, limit);
         return res.status(200).json({
             EC: response.EC,
             EM: response.EM,
@@ -265,5 +285,6 @@ export default {
     registerStaff,
     refreshToken,
     forgotPassword,
-    resetPassword
+    resetPassword,
+    logout
 };

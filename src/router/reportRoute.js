@@ -10,7 +10,7 @@ let router = express.Router();
 let initReportRoute = (app) => {
     router.get('/revenue', authentication, checkRole('admin'), reportController.getRevenue);
     router.get('/export-revenue/excel', authentication, checkRole('admin'), exportController.exportRevenueToExcel);
-    router.get('/export-revenue/pdf', authentication, checkRole('admin'), exportController.exportRevenueToPdf);
+    router.get('/revenue-ingredients', authentication, checkRole('admin'), reportController.getRevenueIngredients);
     return app.use("/api/report", router);
 }
 export default initReportRoute;
