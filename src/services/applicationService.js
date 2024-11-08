@@ -111,14 +111,6 @@ const createApplication = async (application) => {
 const updateApplication = async (applicationId, application) => {
     try {
         let updateApplication = await Application.findByIdAndUpdate(applicationId, {
-            full_name: application.full_name,
-            email: application.email,
-            phone_number: application.phone_number,
-            cid: application.cid,
-            address: application.address,
-            dob: application.dob,
-            about: application.about,
-            require: application.require,
             status: application.status
         }, { new: true })
 
