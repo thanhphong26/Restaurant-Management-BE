@@ -16,12 +16,15 @@ import initPromotionRoute from './router/promotionRoute.js';
 import initApplicationRoute from './router/applicationRoute.js';
 import initRecruimentRoute from './router/recruimentRoute.js';
 import initTableRoute from './router/tableRoute.js';
+import initReportRoute from './router/reportRoute.js';
+import cookieParser from 'cookie-parser';
 dotenv.config();
 
 const app = express();
 
 //Application-level middleware
 app.use(corsConfig); //Third-party middleware for CORS
+app.use(cookieParser()); //Third-party middleware for parsing cookies
 app.use(express.json()); //Built-in middleware for parsing JSON
 app.use(express.urlencoded({ extended: true })); //Built-in middleware for parsing URL-encoded data
 const port = process.env.PORT || 3000;
@@ -41,7 +44,7 @@ initApplicationRoute(app);
 initRecruimentRoute(app);
 initTableRoute(app);
 initBookingRoute(app);
-
+initReportRoute(app);
 app.get('/', (req, res) => {
     res.send('Hello World 123');
 });

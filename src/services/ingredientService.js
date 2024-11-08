@@ -219,6 +219,7 @@ const updateIngredientInventory = async (ingredientId, updateData) => {
             };
         }
         let newInventory = ingredient.inventory;
+        let latestPrice;
         if (updateData.type === 'import') {
             newInventory += updateData.quantity;
         } else if (updateData.type === 'export') {
@@ -230,6 +231,14 @@ const updateIngredientInventory = async (ingredientId, updateData) => {
                 };
             }
             newInventory -= updateData.quantity;
+            const latestUpdate = await UpdateIngredient.findOne({
+                ingredient_id: ingredientId,
+                type: 'import'
+            })
+            .sort({ date: -1 })
+            .exec();
+            latestPrice = latestUpdate ? latestUpdate.price : null;
+            updateData.price = latestPrice;
         }
         ingredient.inventory = newInventory;
         await ingredient.save({ session });
@@ -317,11 +326,11 @@ const getStatistics=async(startDate,endDate)=>{
 }
 const checkExpiredIngredients=async()=>{
     try{
-        const ingredients=await Ingredient.find({
+        console.log('test')
+        const ingredients=await UpdateIngredient.find({
             expiration_date:{
                 $lt: new Date()
             },
-            status: 'active',
             type: 'import'
         });
         return {
