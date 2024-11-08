@@ -109,6 +109,35 @@ const getStaffById = async (req, res) => {
     }
 }
 
+const getTimeKeepingInMonthByStaffId = async (req, res) => {
+    try {
+        let staffId = req.query.id;
+        let month = req.query.month;
+        let year = req.query.year;
+        if(staffId && month && year) {
+            let response = await staffService.getTimeKeepingInMonthByStaffId(staffId, month, year);
+            return res.status(200).json({
+                EC: response.EC,
+                EM: response.EM,
+                DT: response.DT
+            });
+        } else {
+            return res.status(400).json({
+                EC: 400,
+                EM: "Missing information",
+                DT: ""
+            });
+        }
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            EC: 500,
+            EM: "Error from server",
+            DT: ""
+        });
+    }
+}
+
 const createStaff = async (req, res) => {
     try {
         let staff = req.body;
@@ -141,6 +170,12 @@ const updateStaff = async (req, res) => {
                 EM: response.EM,
                 DT: response.DT
             });
+        } else {
+            return res.status(400).json({
+                EC: 400,
+                EM: "Missing information",
+                DT: ""
+            });
         }
     } catch (error) {
         console.log(error);
@@ -162,6 +197,12 @@ const deleteStaff = async (req, res) => {
                 EM: response.EM,
                 DT: response.DT
             });
+        } else {
+            return res.status(400).json({
+                EC: 400,
+                EM: "Missing staff id",
+                DT: ""
+            });
         }
     } catch (error) {
         console.log(error);
@@ -178,6 +219,7 @@ export default {
     getStaffByPosition,
     getStaffByType,
     getStaffById,
+    getTimeKeepingInMonthByStaffId,
     createStaff,
     updateStaff,
     deleteStaff
