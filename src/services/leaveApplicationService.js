@@ -260,15 +260,16 @@ const getTimeKeepingInMonth = async (staffId, month, year) => {
 
         const startDate = new Date(year, month - 1, 1);
         const endDate = new Date(year, month, 0);
-
+        console.log('startDate: ', startDate, 'endDate: ', endDate);
+        console.log('staffId: ', staffId);
         const timeKeepingList = await TimeKeeping.find({
             staff_id: staffId,
-            date: {
+            check_in: {
                 $gte: startDate,
                 $lte: endDate
             }
         }).sort({ date: 1 });
-
+        console.log('timeKeepingList: ', timeKeepingList);
         // Tính toán thống kê
         const statistics = {
             totalDays: timeKeepingList.length,

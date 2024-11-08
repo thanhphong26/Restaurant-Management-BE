@@ -2,7 +2,7 @@ import leaveApplicationService from "../services/leaveApplicationService.js";
 const createLeaveApplication = async (req, res) => {
     try {
         const response = await leaveApplicationService.createLeaveApplication(req.body);
-        return res.status(201).json({
+        return res.status(200).json({
             EC: response.EC,
             EM: response.EM,
             DT: response.DT
@@ -96,7 +96,7 @@ const checkOut = async (req, res) => {
 }
 const getTimeKeepingInMonth = async (req, res) => {
     try {
-        const response = await leaveApplicationService.getTimeKeepingInMonth(req.params.staff_id, req.params.month, req.params.year);
+        const response = await leaveApplicationService.getTimeKeepingInMonth(req.query.staff_id, req.query.month, req.query.year);
         return res.status(200).json({
             EC: response.EC,
             EM: response.EM,
@@ -113,7 +113,8 @@ const getTimeKeepingInMonth = async (req, res) => {
 }
 const getListLeaveApplication = async (req, res) => {
     try {
-        const response = await leaveApplicationService.getListLeaveApplication(req.params.staff_id, req.params.status, req.params.start_date, req.params.end_date);
+        const { staff_id, status, start_date, end_date } = req.query;
+        const response = await leaveApplicationService.getListLeaveApplication(staff_id, status, start_date, end_date);
         return res.status(200).json({
             EC: response.EC,
             EM: response.EM,

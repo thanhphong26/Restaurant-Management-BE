@@ -10,7 +10,7 @@ const register = async (req, res) => {
             });
         }
         const response = await userService.registerUser(req.body);
-        return res.status(201).json({
+        return res.status(200).json({
             EC: response.EC,
             EM: response.EM,
             DT: response.DT
@@ -178,18 +178,18 @@ const getAllUsers = async (req, res) => {
 };
 
 const registerStaff = async (req, res) => {
-    try{
+    try {
         let staffData = req.body;
-        if(staffData && staffData.username && staffData.password && staffData.last_name && staffData.first_name 
+        if (staffData && staffData.username && staffData.password && staffData.last_name && staffData.first_name
             && staffData.role && staffData.cid && staffData.email && staffData.phone_number && staffData.address
-            && staffData.position && staffData.salary && staffData.type){
+            && staffData.position && staffData.salary && staffData.type) {
             let response = await userService.registerStaff(staffData);
-            return res.status(201).json({
+            return res.status(200).json({
                 EC: response.EC,
                 EM: response.EM,
                 DT: response.DT
             });
-        }else{
+        } else {
             return res.status(400).json({
                 EC: 400,
                 EM: "Dữ liệu không hợp lệ",
@@ -233,8 +233,8 @@ const forgotPassword = async (req, res) => {
 };
 const resetPassword = async (req, res) => {
     try {
-        const {password, token } = req.body;
-        if ( !password || !token) {
+        const { password, token } = req.body;
+        if (!password || !token) {
             return res.status(400).json({
                 EC: 400,
                 EM: "Không được để trống email, mật khẩu hoặc token",
