@@ -246,6 +246,19 @@ const createShift = async (shift) => {
             };
         }
 
+        const existingShift = await Shift.findOne({
+            date: shift.date,
+            shift_number: shift.shift_number
+        });
+
+        if (existingShift) {
+            return {
+                EC: 400,
+                EM: "Ca làm việc này đã tồn tại trong ngày",
+                DT: ""
+            };
+        }
+
         let newShift = await Shift.create({
             date: shift.date,
             shift_number: shift.shift_number,
