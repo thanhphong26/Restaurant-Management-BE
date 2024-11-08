@@ -3,22 +3,20 @@ import bookingService from "../services/bookingService.js";
 const getAllBookings = async (req, res) => {
     try {
         //lấy id từ query của req
-        const { userId, adminId } = req.query;
-        if (userId) {
-            let response = await bookingService.getBookingById(userId);
+        const role = req.user.role;
+        if (role === 'customer') {
+            let response = await bookingService.getAllBookingByUserId(req.user.id);
             return res.status(200).json({
                 EC: response.EC,
                 EM: response.EM,
-                userId,
                 DT: response.DT
             });
         }
-        else if (adminId) {
+        else {
             let response = await bookingService.getAllBookings();
             return res.status(200).json({
                 EC: response.EC,
                 EM: response.EM,
-                adminId,
                 DT: response.DT
             });
         }
@@ -57,7 +55,7 @@ const createBooking = async (req, res) => {
 }
 const getBookingById = async (req, res) => {
     try {
-        let response = await bookingService.getBookingById(req.user.id);
+        let response = await bookingService.getBookingById(req.query.bookingId);
         return res.status(200).json({
             EC: response.EC,
             EM: response.EM,
@@ -140,6 +138,23 @@ const getAllBookingsByPhoneNumber = async (req, res) => {
         });
     }
 }
+const payment = async (req, res) => {
+    try {
+        let response = await bookingService.payment(req.query.bookingId, req.body);
+        return res.status(200).json({
+            EC: response.EC,
+            EM: response.EM,
+            DT: response.DT
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            EC: 500,
+            EM: "Error from server",
+            DT: "",
+        });
+    }
+}
 export default {
     getAllBookings,
     createBooking,
@@ -148,4 +163,5 @@ export default {
     updateBooking,
     getOrderDetailByBookingId,
     getAllBookingsByPhoneNumber,
+    payment
 }

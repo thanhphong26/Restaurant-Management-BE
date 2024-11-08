@@ -3,6 +3,7 @@ import Table from "../model/table/table.schema.js";
 import User from "../model/user/user.schema.js";
 import tableService from "./tableService.js";
 import orderService from "./orderService.js";
+import Promotion from "../model/promotions/promotion.schema.js";
 const getAllBookings = async () => {
     // const pipeline = [
     //     {
@@ -123,9 +124,33 @@ const updateBooking = async (id, booking) => {
     }
 }
 const createBookingWithTableId = async (id, booking) => {
-    try {
-        let table = await tableService.getOneTable(booking.table_id);
-        if (table.DT.status == "available") {
+    let table = await tableService.getOneTable(booking.table_id);
+    if (table.DT.status == "available") {
+        let order_detail = [];
+        //Tạo order
+        if (booking?.order_detail?.length) {
+            //có đặt món
+            const list_order = await orderService.createOrder(booking.order_detail);
+            order_detail = list_order.DT.map(item => item._id);
+        }
+        // lấy mảng id món ăn để tạo booking
+        let newBooking = await Booking.create({ ...booking, user_id: id, order_detail });
+        return {
+            EC: 0,
+            EM: "Tạo đặt lịch thành công",
+            DT: newBooking
+        }
+    } else {
+        //check booking table with today
+        let bookingToday = await Booking.findOne({ table_id: booking.table_id, date: booking.date });
+        if (bookingToday) {
+            return {
+                EC: 1,
+                EM: "Bàn đã được đặt trong ngày",
+                DT: ""
+            }
+        }
+        else {
             let order_detail = [];
             //Tạo order
             if (booking?.order_detail?.length) {
@@ -140,39 +165,6 @@ const createBookingWithTableId = async (id, booking) => {
                 EM: "Tạo đặt lịch thành công",
                 DT: newBooking
             }
-        } else {
-            //check booking table with today
-            let bookingToday = await Booking.findOne({ table_id: booking.table_id, date: booking.date });
-            if (bookingToday) {
-                return {
-                    EC: 1,
-                    EM: "Bàn đã được đặt trong ngày",
-                    DT: ""
-                }
-            }
-            else {
-                let order_detail = [];
-                //Tạo order
-                if (booking?.order_detail?.length) {
-                    //có đặt món
-                    const list_order = await orderService.createOrder(booking.order_detail);
-                    order_detail = list_order.DT.map(item => item._id);
-                }
-                // lấy mảng id món ăn để tạo booking
-                let newBooking = await Booking.create({ ...booking, user_id: id, order_detail });
-                return {
-                    EC: 0,
-                    EM: "Tạo đặt lịch thành công",
-                    DT: newBooking
-                }
-            }
-        }
-    } catch (error) {
-        console.log(error);
-        return {
-            EC: 500,
-            EM: "Error from server",
-            DT: "",
         }
     }
 }
@@ -222,8 +214,99 @@ const getAllBookingsByPhoneNumber = async (phone_number) => {
         }
     }
 }
+const payment = async (id, data) => {
+    try {
+        let checkBooking = await Booking.findById(id);
+        if (checkBooking.payment_status === 'paid') {
+            return {
+                EC: 1,
+                EM: "Hóa đơn đã được thanh toán",
+                DT: ""
+            }
+        } else {
+            // kiểm tra mã giảm giá
+            let Code = await Promotion.findOne({ code: data.voucher });
+            if (!Code) {
+                return {
+                    EC: 1,
+                    EM: "Mã giảm giá không hợp lệ",
+                    DT: ""
+                }
+            }
+            else {
+                // kiểm tra điều kiện mã giảm giá (status, startDate, endDate, condition)
+                if (Code.status !== 'active' && new Date() > Code.startDate && new Date() < Code.endDate && Code.quantity > 0) {
+                    return {
+                        EC: 1,
+                        EM: "Không thể sử dụng mã giảm giá",
+                        DT: ""
+                    }
+                } else {
+                    // thực hiện cập nhật promotion, booking, user 
+                    let promotion = await Promotion.findByIdAndUpdate(Code._id, { $inc: { quantity: -1 } }, { new: true });
+                    let booking = await Booking.findByIdAndUpdate(id, { $set: { ...data, payment_status: 'paid' } }, { new: true });
+                    let user = await User.findByIdAndUpdate(booking.user_id, { $push: { save_voucher: data.voucher } }, { new: true });
+                    if (promotion && booking && user)
+                        return {
+                            EC: 0,
+                            EM: "Thanh toán thành công",
+                            DT: booking
+                        }
+                    else
+                        return {
+                            EC: 1,
+                            EM: "Thanh toán không thất bại",
+                            DT: ""
+                        }
+                }
+            }
+        }
+        //     let updatedBooking = await Booking.findByIdAndUpdate(
+        //         id,
+        //         { $set: data },
+        //         { new: true });
+        //     if (updatedBooking.payment_status === 'paid' && updatedBooking.payment_method !== null && updateBooking.total !== 0) {
+        //         return {
+        //             EC: 0,
+        //             EM: "Thanh toán không thành công",
+        //             DT: ""
+        //         }
+        //     } else
+        //         return {
+        //             EC: 1,
+        //             EM: "Thanh toán thất bại",
+        //             DT: ""
+        //         }
+    }
+    catch (error) {
+        console.log(error);
+        return {
+            EC: 500,
+            EM: "Error from server",
+            DT: "",
+        }
+    }
+}
+const getAllBookingByUserId = async (id) => {
+    try {
+        let bookings = await Booking.find({ user_id: id });
+        return {
+            EC: 0,
+            EM: "Lấy thông tin booking thành công",
+            DT: bookings
+        }
+    } catch (error) {
+        console.log(error);
+        return {
+            EC: 500,
+            EM: "Error from server",
+            DT: "",
+        }
+    }
+}
 export default {
     getAllBookings,
+    getAllBookingByUserId,
     createBooking,
     getBookingById,
     createComment,
@@ -231,4 +314,5 @@ export default {
     createBookingWithTableId,
     getOrderDetailByBookingId,
     getAllBookingsByPhoneNumber,
+    payment
 }

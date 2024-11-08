@@ -18,6 +18,7 @@ import initRecruimentRoute from './router/recruimentRoute.js';
 import initTableRoute from './router/tableRoute.js';
 import initReportRoute from './router/reportRoute.js';
 import cookieParser from 'cookie-parser';
+import initPaymentRoute from './router/paymentRoute.js';
 dotenv.config();
 
 const app = express();
@@ -45,6 +46,8 @@ initRecruimentRoute(app);
 initTableRoute(app);
 initBookingRoute(app);
 initReportRoute(app);
+initPaymentRoute(app);
+
 app.get('/', (req, res) => {
     res.send('Hello World 123');
 });
