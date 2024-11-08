@@ -15,3 +15,5 @@ let initPromotionRoute = (app) => {
     return app.use("/api/promotion", router);
 }
 export default initPromotionRoute;
+
+

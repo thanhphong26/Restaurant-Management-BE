@@ -1,5 +1,7 @@
 import Staff from "../model/staff/staff.schema.js";
+import TimeKeeping from "../model/timeKeeping/timeKeeping.schema.js";
 import { status } from "../utils/index.js";
+import { ObjectId } from "mongodb";
 
 const getAllStaff = async (page, limit, search) => { 
     try {
@@ -362,11 +364,105 @@ const deleteStaff = async (staffId) => {
     }
 }
 
+const getTimeKeepingInMonthByStaffId = async (staffId1, month1, year1) => {
+    try {
+        const staffId = new ObjectId(staffId1);
+        const month = parseInt(month1, 10); 
+        const year = parseInt(year1, 10); 
+
+        const startOfMonth = new Date(Date.UTC(year, month - 1, 1, 17));
+        const endOfMonth = new Date(Date.UTC(year, month, 1, 17));    
+
+        const timekeepings = await TimeKeeping.aggregate([
+            { 
+                $match: {
+                    staff_id: staffId,
+                    check_in: { $gte: startOfMonth, $lt: endOfMonth }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'staffs', 
+                    localField: 'staff_id',
+                    foreignField: '_id',
+                    as: 'staff'
+                }
+            },
+            {
+                $unwind: '$staff'
+            },
+            {
+                $lookup: {
+                    from: 'users', 
+                    localField: 'staff.user_id', 
+                    foreignField: '_id',
+                    as: 'user'
+                }
+            },
+            {
+                $unwind: '$user'
+            },
+            {
+                $project: {
+                    _id: 0,
+                    staffId: '$staff_id',
+                    check_in: 1,
+                    check_out: 1,
+                    status_check_in: 1,
+                    status_check_out: 1,
+                    fullName: { $concat: ['$user.first_name', ' ', '$user.last_name'] },
+                    avatar: '$user.avatar'
+                }
+            }
+        ]);
+
+        if (timekeepings.length === 0) {
+            return {
+                EC: 0,
+                EM: "Không có dữ liệu chấm công cho tháng này",
+                DT: ""
+            };
+        }
+
+        // Tính số ngày đi làm và số ngày đi làm trễ
+        const totalWorkDays = timekeepings.length;
+        const lateDays = timekeepings.filter(record => record.status_check_in === 'late').length;
+        const earlyDays = timekeepings.filter(record => record.status_check_out === 'early').length;
+
+        return {
+            EC: 0,
+            EM: "Lấy thông tin chấm công thành công",
+            DT: {
+                totalWorkDays,
+                lateDays,
+                earlyDays,
+                fullName: timekeepings[0].fullName,
+                avatar: timekeepings[0].avatar,
+                details: timekeepings.map(record => ({
+                    check_in: record.check_in,
+                    check_out: record.check_out,
+                    status_check_in: record.status_check_in,
+                    status_check_out: record.status_check_out,
+                    staffId: record.staffId
+                }))
+            }
+        };
+    } catch (error) {
+        console.log(error);
+        return {
+            EC: 500,
+            EM: "Error from server",
+            DT: ""
+        };
+    }
+};
+
 export default {
     getAllStaff,
     getStaffByPosition,
     getStaffByType,
     getStaffById,
+    getTimeKeepingInMonthByStaffId,
     createStaff,
     updateStaff,
     deleteStaff

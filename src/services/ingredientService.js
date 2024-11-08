@@ -4,7 +4,7 @@ import UpdateIngredient from "../model/updateIngredient/updateIngredient.schema.
 const createIngredient = async (ingredientData) => { 
     try {
         //validate input data
-        const allowFields=['name','inventory','unit','description','type','status'];
+        const allowFields=['name','inventory','unit','description','type'];
         const sanitizedData={};
         Object.keys(ingredientData).forEach((field)=>{
             if(allowFields.includes(field)){
@@ -18,7 +18,7 @@ const createIngredient = async (ingredientData) => {
                 DT: ''
             };
         }
-        if(!sanitizedData.name||!sanitizedData.inventory||!sanitizedData.unit||!sanitizedData.type||!sanitizedData.status){
+        if(!sanitizedData.name||!sanitizedData.inventory||!sanitizedData.unit||!sanitizedData.type){
             return {
                 EC: 1,
                 EM: 'Không được để trống thông tin nguyên liệu',
@@ -29,13 +29,6 @@ const createIngredient = async (ingredientData) => {
             return {
                 EC: 1,
                 EM: 'Tồn kho không hợp lệ',
-                DT: ''
-            };
-        }
-        if(!['active','inactive'].includes(sanitizedData.status)){
-            return {
-                EC: 1,
-                EM: 'Trạng thái không hợp lệ',
                 DT: ''
             };
         }

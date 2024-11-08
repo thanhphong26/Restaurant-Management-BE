@@ -8,11 +8,16 @@ let router = express.Router();
 let initShiftRoute = (app) => {
     
     router.get("", authentication, shiftController.getAllShifts);
-    router.get("/:id", authentication, shiftController.getShiftsByStaffId);
     router.get("/by-date", authentication, shiftController.getShiftsByDateRange);
+    router.get("/:id", authentication, shiftController.getShiftsByStaffId);
     router.post("", authentication, checkRole('admin','manager'), shiftController.createShift);
     router.put("/:id", authentication, checkRole('admin','manager'), shiftController.updateShift);
     
     return app.use("/api/shift", router);
 }
 export default initShiftRoute;
+
+
+
+
+
