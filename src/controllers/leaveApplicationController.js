@@ -2,7 +2,7 @@ import leaveApplicationService from "../services/leaveApplicationService.js";
 const createLeaveApplication = async (req, res) => {
     try {
         const response = await leaveApplicationService.createLeaveApplication(req.body);
-        return res.status(201).json({
+        return res.status(200).json({
             EC: response.EC,
             EM: response.EM,
             DT: response.DT
