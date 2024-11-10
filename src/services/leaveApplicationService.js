@@ -199,7 +199,7 @@ const getTimeKeepingInMonth = async (staffId, month, year) => {
 
         const timeKeepingList = await TimeKeeping.find({
             staff_id: staffId,
-            date: {
+            check_in: {
                 $gte: startDate,
                 $lte: endDate
             }
