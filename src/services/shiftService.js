@@ -176,25 +176,30 @@ const getShiftsByStaffId = async (staffId) => {
                 $match: { 
                     list_staff: new mongoose.Types.ObjectId(staffId) 
                 }
-            },{
+            },
+            {
                 $lookup: {
-                    from: 'staffs', 
-                    localField: 'list_staff', 
-                    foreignField: '_id', 
+                    from: 'staffs',
+                    localField: 'list_staff',
+                    foreignField: '_id',
                     as: 'staffDetails'
                 }
-            },{
-                $unwind: '$staffDetails' 
-            },{
+            },
+            {
+                $unwind: '$staffDetails'
+            },
+            {
                 $lookup: {
-                    from: 'users', 
-                    localField: 'staffDetails.user_id', 
-                    foreignField: '_id', 
+                    from: 'users',
+                    localField: 'staffDetails.user_id',
+                    foreignField: '_id',
                     as: 'userDetails'
                 }
-            },{
-                $unwind: '$userDetails' 
-            },{
+            },
+            {
+                $unwind: '$userDetails'
+            },
+            {
                 $project: {
                     _id: 0,
                     staffId: '$staffDetails._id',
@@ -202,22 +207,23 @@ const getShiftsByStaffId = async (staffId) => {
                     email: '$userDetails.email',
                     phone_number: '$userDetails.phone_number',
                     avatar: '$userDetails.avatar',
-                    date: 1, 
-                    shift_number: 1 
+                    date: 1,
+                    shift_number: 1
                 }
             }
         ];
 
         let shifts = await Shift.aggregate(pipeline);
+        shifts = shifts.filter(shift => shift.staffId.toString() === staffId);
 
-        if(shifts.length === 0) {
+        if (shifts.length === 0) {
             return {
                 EC: 1,
                 EM: "Không có ca làm việc nào",
                 DT: []
             };
         }
-        
+
         return {
             EC: 0,
             EM: "Lấy thông tin ca làm việc thành công",
@@ -230,9 +236,10 @@ const getShiftsByStaffId = async (staffId) => {
             EC: 500,
             EM: "Error from server",
             DT: "",
-        }
+        };
     }
-}
+};
+
 
 const createShift = async (shift) => {
     try {
