@@ -2,7 +2,7 @@ import ingredientService from "../services/ingredientService.js";
 const createIngredient = async (req, res) => {
     try {
         const response = await ingredientService.createIngredient(req.body);
-        return res.status(201).json({
+        return res.status(200).json({
             EC: response.EC,
             EM: response.EM,
             DT: response.DT
@@ -87,7 +87,7 @@ const getAllIngredients = async (req, res) => {
 }
 const updateIngredientInventory = async (req, res) => {
     try {
-        const {id}=req.query;
+        const { id } = req.query;
         const response = await ingredientService.updateIngredientInventory(id, req.body);
         return res.status(200).json({
             EC: response.EC,
@@ -105,7 +105,7 @@ const updateIngredientInventory = async (req, res) => {
 }
 const getUpdatedHistory = async (req, res) => {
     try {
-        const {ingredientId, page, limit, ...query } = req.query;
+        const { ingredientId, page, limit, ...query } = req.query;
         console.log(ingredientId, page, limit, query);
         const response = await ingredientService.getUpdatedHistory(ingredientId, query, page, limit);
         return res.status(200).json({
