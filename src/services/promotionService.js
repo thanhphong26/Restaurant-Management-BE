@@ -3,8 +3,21 @@ import mongoose from "mongoose";
 import Promotion from "../model/promotions/promotion.schema.js";
 import User from "../model/user/user.schema.js";
 
-const getAllPromotionsValid = async (page, limit, search) => {
+const getPromotionsValid = async (page, limit, search, userId) => {
     try {
+        let savedVouchers = [];
+        if (userId) {
+            const user = await User.findById(userId).select("save_voucher");
+            if (!user) {
+                return {
+                    EC: 404,
+                    EM: "User not found",
+                    DT: ""
+                };
+            }
+            savedVouchers = user.save_voucher || [];
+        }
+
         let pipeline = [
             {
                 $match: {
@@ -14,7 +27,8 @@ const getAllPromotionsValid = async (page, limit, search) => {
                     endDate: { $gte: new Date() },
                     ...(search && {
                         code: { $regex: search, $options: 'i' }
-                    })
+                    }),
+                    ...(userId && { code: { $nin: savedVouchers } }) // Exclude saved vouchers if userId is provided
                 }
             },
             {
@@ -35,69 +49,6 @@ const getAllPromotionsValid = async (page, limit, search) => {
             { $limit: +limit }
         ];
 
-        let promotions = await Promotion.aggregate(pipeline);
-        return {
-            EC: 0,
-            EM: "Lấy danh sách khuyến mãi thành công",
-            DT: promotions
-        }
-    } catch (error) {
-        console.log(error);
-        return {
-            EC: 500,
-            EM: "Error from server",
-            DT: "",
-        }
-    }
-}
-
-const getPromotionValidByUserId = async (userId, page, limit, search) => {
-    try {
-        // Fetch user data to get the save_voucher array
-        const user = await User.findById(userId).select("save_voucher");
-        if (!user) {
-            return {
-                EC: 404,
-                EM: "User not found",
-                DT: ""
-            };
-        }
-
-        const savedVouchers = user.save_voucher || [];
-
-        // Build the pipeline
-        let pipeline = [
-            {
-                $match: {
-                    status: status.ACTIVE,
-                    quantity: { $gt: 0 },
-                    startDate: { $lte: new Date() },
-                    endDate: { $gte: new Date() },
-                    code: { $nin: savedVouchers },  // Exclude saved vouchers
-                    ...(search && {
-                        code: { $regex: search, $options: 'i' }
-                    })
-                }
-            },
-            {
-                $project: {
-                    _id: 0,
-                    promotionId: '$_id',
-                    code: 1,
-                    description: 1,
-                    quantity: 1,
-                    discount: 1,
-                    condition: 1,
-                    type: 1,
-                    startDate: 1,
-                    endDate: 1
-                }
-            },
-            { $skip: (+page - 1) * +limit },
-            { $limit: +limit }
-        ];
-
-        // Run the aggregation
         let promotions = await Promotion.aggregate(pipeline);
         return {
             EC: 0,
@@ -113,6 +64,33 @@ const getPromotionValidByUserId = async (userId, page, limit, search) => {
         };
     }
 };
+
+
+const getPromotionById = async (promotionId) => {
+    try {
+        let promotion = await Promotion.findById(promotionId);
+        if (!promotion) {
+            return {
+                EC: 404,
+                EM: "Không tìm thấy khuyến mãi",
+                DT: ""
+            }
+        }
+
+        return {
+            EC: 0,
+            EM: "Lấy thông tin khuyến mãi thành công",
+            DT: promotion
+        }
+    } catch (error) {
+        console.log(error);
+        return {
+            EC: 500,
+            EM: "Lấy thông tin khuyến mãi thất bại",
+            DT: "",
+        }
+    }
+}
 
 const createPromotion = async (promotion) => {
     try {
@@ -202,8 +180,8 @@ const deletePromotion = async (promotionId) => {
 }
 
 export default {
-    getAllPromotionsValid,
-    getPromotionValidByUserId,
+    getPromotionsValid,
+    getPromotionById,
     createPromotion,
     updatePromotion,
     deletePromotion

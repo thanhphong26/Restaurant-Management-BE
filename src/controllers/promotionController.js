@@ -1,11 +1,12 @@
 import promotionService from "../services/promotionService.js";
 
-const getAllPromotionsValid = async (req, res) => {
+const getPromotionsValid = async (req, res) => {
     try {
         let page = req.query.page || 1;
         let limit = req.query.limit || 10;
         let search = req.query.search || '';
-        let response = await promotionService.getAllPromotionsValid(page, limit, search);
+        let userId = req.query.userId || null;
+        let response = await promotionService.getPromotionsValid(page, limit, search, userId);
         return res.status(200).json({
             EC: response.EC,
             EM: response.EM,
@@ -21,13 +22,10 @@ const getAllPromotionsValid = async (req, res) => {
     }
 }
 
-const getPromotionValidByUserId = async (req, res) => {
+const getPromotionById = async (req, res) => {
     try {
-        let userId = req.query.id;
-        let page = req.query.page || 1;
-        let limit = req.query.limit || 10;
-        let search = req.query.search || '';
-        let response = await promotionService.getPromotionValidByUserId(userId, page, limit, search);
+        let promotionId = req.params.id;
+        let response = await promotionService.getPromotionById(promotionId);
         return res.status(200).json({
             EC: response.EC,
             EM: response.EM,
@@ -115,8 +113,8 @@ const deletePromotion = async (req, res) => {
 }
 
 export default {
-    getAllPromotionsValid,
-    getPromotionValidByUserId,
+    getPromotionsValid,
+    getPromotionById,
     createPromotion,
     updatePromotion,
     deletePromotion
