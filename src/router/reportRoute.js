@@ -5,7 +5,6 @@ import reportController from '../controllers/reportController.js';
 import exportController from '../controllers/exportController.js';
 dotenv.config();
 
-
 let router = express.Router();
 let initReportRoute = (app) => {
     router.get('/revenue', authentication, checkRole('admin'), reportController.getRevenue);

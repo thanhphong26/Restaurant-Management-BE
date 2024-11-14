@@ -3,7 +3,7 @@ import TimeKeeping from "../model/timeKeeping/timeKeeping.schema.js";
 import { status } from "../utils/index.js";
 import { ObjectId } from "mongodb";
 
-const getAllStaff = async (page, limit, search) => { 
+const getAllStaff = async (page, limit, search, filterType, filterValue) => { 
     try {
         const pipeline = [
             {
@@ -27,6 +27,9 @@ const getAllStaff = async (page, limit, search) => {
                     status: status.ACTIVE,
                     ...(search && {
                         fullName: { $regex: search, $options: 'i' }
+                    }),
+                    ...((filterType === "position" || filterType === "type") && filterValue && {
+                        [filterType]: filterValue
                     })
                 }
             },
@@ -55,12 +58,12 @@ const getAllStaff = async (page, limit, search) => {
     
         let staffs = await Staff.aggregate(pipeline);
 
-        if(staffs.length === 0) {
+        if (staffs.length === 0) {
             return {
                 EC: 0,
                 EM: "Không tìm thấy nhân viên",
                 DT: ""
-            }
+            };
         }
 
         return {
@@ -74,165 +77,10 @@ const getAllStaff = async (page, limit, search) => {
         return {
             EC: 500,
             EM: "Error from server",
-            DT: "",
+            DT: ""
         };
     }
 };
-
-
-const getStaffByPosition = async (page, limit, search, position) => {
-    try {
-        const pipeline = [
-            {
-                $lookup: {
-                    from: 'users',
-                    localField: 'user_id',
-                    foreignField: '_id',
-                    as: 'user'
-                }
-            },
-            { 
-                $unwind: '$user' 
-            },
-            {
-                $addFields: {
-                    fullName: { $concat: ['$user.first_name', ' ', '$user.last_name'] }
-                }
-            },
-            {
-                $match: {
-                    status: status.ACTIVE,
-                    position: position,
-                    ...(search && {
-                        fullName: { $regex: search, $options: 'i' }
-                    })
-                }
-            },
-            {
-                $project: {
-                    _id: 0,
-                    staffId: '$_id',
-                    position: 1,
-                    salary: 1,
-                    type: 1,
-                    point: 1,
-                    status: 1,
-                    username: '$user.username',
-                    role: '$user.role',
-                    fullName: 1,
-                    email: '$user.email',
-                    cid: '$user.cid',
-                    address: '$user.address',
-                    phone_number: '$user.phone_number',
-                    avatar: '$user.avatar'
-                }
-            },
-            { $skip: (+page - 1) * +limit },
-            { $limit: +limit }
-        ];
-    
-        let staffs = await Staff.aggregate(pipeline);
-
-        if(staffs.length === 0) {
-            return {
-                EC: 0,
-                EM: "Không tìm thấy nhân viên",
-                DT: ""
-            }
-        } 
-
-        return {
-            EC: 0,
-            EM: "Lấy thông tin nhân viên thành công",
-            DT: staffs  
-        }
-
-    } catch (error) {
-        console.log(error);
-        return {
-            EC: 500,
-            EM: "Error from server",
-            DT: "",
-        }
-    }
-}
-
-const getStaffByType = async (page, limit, search, type) => {
-    try {
-        const pipeline = [
-            {
-                $lookup: {
-                    from: 'users',
-                    localField: 'user_id',
-                    foreignField: '_id',
-                    as: 'user'
-                }
-            },
-            { 
-                $unwind: '$user' 
-            },
-            {
-                $addFields: {
-                    fullName: { $concat: ['$user.first_name', ' ', '$user.last_name'] }
-                }
-            },
-            {
-                $match: {
-                    status: status.ACTIVE,
-                    type: type,
-                    ...(search && {
-                        fullName: { $regex: search, $options: 'i' }
-                    })
-                }
-            },
-            {
-                $project: {
-                    _id: 0,
-                    staffId: '$_id',
-                    position: 1,
-                    salary: 1,
-                    type: 1,
-                    point: 1,
-                    status: 1,
-                    username: '$user.username',
-                    role: '$user.role',
-                    fullName: 1,
-                    email: '$user.email',
-                    cid: '$user.cid',
-                    address: '$user.address',
-                    phone_number: '$user.phone_number',
-                    avatar: '$user.avatar'
-                }
-            },
-            { $skip: (+page - 1) * +limit },
-            { $limit: +limit }
-        ];
-    
-        let staffs = await Staff.aggregate(pipeline);
-
-        if(staffs.length === 0) {
-            return {
-                EC: 0,
-                EM: "Không tìm thấy nhân viên",
-                DT: ""
-            }
-        } 
-
-        return {
-            EC: 0,
-            EM: "Lấy thông tin nhân viên thành công",
-            DT: staffs  
-        }
-
-    } catch (error) {
-        console.log(error);
-        return {
-            EC: 500,
-            EM: "Error from server",
-            DT: "",
-        }
-    }
-}
 
 const getStaffById = async (staffId) => {
     try {
@@ -459,8 +307,6 @@ const getTimeKeepingInMonthByStaffId = async (staffId1, month1, year1) => {
 
 export default {
     getAllStaff,
-    getStaffByPosition,
-    getStaffByType,
     getStaffById,
     getTimeKeepingInMonthByStaffId,
     createStaff,

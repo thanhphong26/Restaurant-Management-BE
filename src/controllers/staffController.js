@@ -5,73 +5,15 @@ const getAllStaff = async (req, res) => {
         const page = req.query.page || 1;
         const limit = req.query.limit || 10;
         const search = req.query.search || "";
-        const response = await staffService.getAllStaff(page, limit, search);
+        const filterType = req.query.filterType || "";
+        const filterValue = req.query.filterValue || "";
+        const response = await staffService.getAllStaff(page, limit, search, filterType, filterValue);
 
         return res.status(200).json({
             EC: response.EC,
             EM: response.EM,
             DT: response.DT
         });
-    } catch (error) {
-        console.log(error);
-        return res.status(500).json({
-            EC: 500,
-            EM: "Error from server",
-            DT: ""
-        });
-    }
-};
-
-const getStaffByPosition = async (req, res) => {
-    try {
-        const page = req.query.page || 1;
-        const limit = req.query.limit || 10;
-        const search = req.query.search || "";
-        const position = req.query.position;
-        if(position){
-            const response = await staffService.getStaffByPosition(page, limit, search, position);
-            return res.status(200).json({
-                EC: response.EC,
-                EM: response.EM,
-                DT: response.DT
-            });
-        } else {
-            return res.status(400).json({
-                EC: 400,
-                EM: "Missing position",
-                DT: ""
-            });
-        }
-    } catch (error) {
-        console.log(error);
-        return res.status(500).json({
-            EC: 500,
-            EM: "Error from server",
-            DT: ""
-        });
-    }
-};
-
-const getStaffByType = async (req, res) => {
-    try {
-        const page = req.query.page || 1;
-        const limit = req.query.limit || 10;
-        const search = req.query.search || "";
-        const type = req.query.type;
-        if(type){
-            const response = await staffService.getStaffByType(page, limit, search, type);
-            return res.status(200).json({
-                EC: response.EC,
-                EM: response.EM,
-                DT: response.DT
-            });
-        } else {
-            return res.status(400).json({
-                EC: 400,
-                EM: "Missing type",
-                DT: ""
-            });
-        }
     } catch (error) {
         console.log(error);
         return res.status(500).json({
@@ -216,8 +158,6 @@ const deleteStaff = async (req, res) => {
 
 export default {
     getAllStaff,
-    getStaffByPosition,
-    getStaffByType,
     getStaffById,
     getTimeKeepingInMonthByStaffId,
     createStaff,
