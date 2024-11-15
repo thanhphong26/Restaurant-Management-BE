@@ -57,6 +57,8 @@ const getAllStaff = async (page, limit, search, filterType, filterValue) => {
         ];
     
         let staffs = await Staff.aggregate(pipeline);
+        let count = staffs.length;
+        const totalPages = Math.ceil(count / limit);
 
         if (staffs.length === 0) {
             return {
@@ -69,7 +71,10 @@ const getAllStaff = async (page, limit, search, filterType, filterValue) => {
         return {
             EC: 0,
             EM: "Lấy thông tin nhân viên thành công",
-            DT: staffs  
+            DT: {
+                staffs, 
+                totalPages
+            }
         };
 
     } catch (error) {
