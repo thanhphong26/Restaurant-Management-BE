@@ -57,7 +57,7 @@ const createBooking = async (req, res) => {
 }
 const getBookingById = async (req, res) => {
     try {
-        let response = await bookingService.getBookingById(req.query.bookingId);
+        let response = await bookingService.getBookingById(req.params.id);
         return res.status(200).json({
             EC: response.EC,
             EM: response.EM,
@@ -74,7 +74,7 @@ const getBookingById = async (req, res) => {
 }
 const createComment = async (req, res) => {
     try {
-        let response = await bookingService.createComment(req.query.bookingId, req.user.id, req.body);
+        let response = await bookingService.createComment(req.params.id, req.user.id, req.body);
         return res.status(200).json({
             EC: response.EC,
             EM: response.EM,
@@ -91,7 +91,7 @@ const createComment = async (req, res) => {
 }
 const updateBooking = async (req, res) => {
     try {
-        let response = await bookingService.updateBooking(req.query.bookingId, req.body);
+        let response = await bookingService.updateBooking(req.params.id, req.body);
         return res.status(200).json({
             EC: response.EC,
             EM: response.EM,
@@ -108,7 +108,7 @@ const updateBooking = async (req, res) => {
 }
 const getOrderDetailByBookingId = async (req, res) => {
     try {
-        let response = await bookingService.getOrderDetailByBookingId(req.query.bookingId);
+        let response = await bookingService.getOrderDetailByBookingId(req.params.id);
         return res.status(200).json({
             EC: response.EC,
             EM: response.EM,
