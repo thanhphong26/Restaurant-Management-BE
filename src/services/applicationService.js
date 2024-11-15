@@ -31,6 +31,8 @@ const getAllApplicationsByStatus = async (page, limit, search, status) => {
         ];
 
         let applications = await Application.aggregate(pipeline);
+        let count = applications.length;
+        let totalPages = Math.ceil(count / limit);
         if (applications.length === 0) {
             return {
                 EC: 404,
@@ -41,7 +43,7 @@ const getAllApplicationsByStatus = async (page, limit, search, status) => {
         return {
             EC: 0,
             EM: "Lấy danh sách đơn ứng tuyển thành công",
-            DT: applications
+            DT: {applications, totalPages}
         }
     } catch (error) {
         console.log(error);

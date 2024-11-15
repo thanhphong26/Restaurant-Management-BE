@@ -68,6 +68,8 @@ const getAllShifts = async (page, limit, search, startDate, endDate) => {
         ];
 
         let shifts = await Shift.aggregate(pipeline);
+        let count = shifts.length;
+        const totalPages = Math.ceil(count / limit);
 
         if (shifts.length === 0) {
             return {
@@ -80,7 +82,7 @@ const getAllShifts = async (page, limit, search, startDate, endDate) => {
         return {
             EC: 0,
             EM: "Lấy thông tin ca làm việc thành công",
-            DT: shifts
+            DT: {shifts, totalPages}
         };
 
     } catch (error) {

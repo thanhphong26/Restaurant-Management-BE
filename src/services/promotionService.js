@@ -50,10 +50,12 @@ const getPromotionsValid = async (page, limit, search, userId) => {
         ];
 
         let promotions = await Promotion.aggregate(pipeline);
+        let count = promotions.length;
+        let totalPages = Math.ceil(count / limit);
         return {
             EC: 0,
             EM: "Lấy danh sách khuyến mãi thành công",
-            DT: promotions
+            DT: {promotions, totalPages}
         };
     } catch (error) {
         console.log(error);

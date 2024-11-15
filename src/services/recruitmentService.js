@@ -32,6 +32,8 @@ const getAllRecruiment = async (page, limit, search) => {
         ];
 
         let recruiments = await Recruiment.aggregate(pipeline);
+        let count = recruiments.length
+        let totalPages = Math.ceil(count / limit);
 
         if (recruiments.length === 0) {
             return {
@@ -44,7 +46,7 @@ const getAllRecruiment = async (page, limit, search) => {
         return {
             EC: 0,
             EM: "Lấy thông tin tuyển dụng thành công",
-            DT: recruiments
+            DT: {recruiments, totalPages}
         }
     } catch (error) {
         console.log(error);
