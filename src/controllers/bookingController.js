@@ -2,10 +2,12 @@ import bookingService from "../services/bookingService.js";
 
 const getAllBookings = async (req, res) => {
     try {
+
+        const { page, limit, sortBy, sortOrder, status } = req.query;
         //lấy id từ query của req
         const role = req.user.role;
         if (role === 'customer') {
-            let response = await bookingService.getAllBookingByUserId(req.user.id);
+            let response = await bookingService.getAllBookingByUserId(req.user.id, page, limit, sortBy, sortOrder, status);
             return res.status(200).json({
                 EC: response.EC,
                 EM: response.EM,
@@ -13,7 +15,7 @@ const getAllBookings = async (req, res) => {
             });
         }
         else {
-            let response = await bookingService.getAllBookings();
+            let response = await bookingService.getAllBookings(page, limit, sortBy, sortOrder, status);
             return res.status(200).json({
                 EC: response.EC,
                 EM: response.EM,

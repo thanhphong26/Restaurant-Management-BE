@@ -4,15 +4,18 @@ import User from "../model/user/user.schema.js";
 import tableService from "./tableService.js";
 import orderService from "./orderService.js";
 import Promotion from "../model/promotions/promotion.schema.js";
-const getAllBookings = async () => {
+const getAllBookings = async (page, limit, sortBy, sortOrder, status) => {
     // const pipeline = [
     //     {
     //         $
     //     }
     // ];
+    const query = {};
+    if (status) {
+        query.status = status;
+    }
     try {
-        let bookings = await Booking.find();
-        console.log(bookings);
+        let bookings = await Booking.find(query).sort({ [sortBy]: sortOrder }).skip((page - 1) * limit).limit(limit);
         return {
             EC: 0,
             EM: "Lấy thông tin booking thành công",
@@ -27,15 +30,38 @@ const getAllBookings = async () => {
         }
     }
 }
-const createBooking = async (user_id, table, booking) => {
+const createBooking = async (user_id, table, booking) => { //completed
     try {
         // lấy bàn trống đầu tiên
-        let resTable = await Table.findOne({ status: "available", ...table });
+        let resTable = {};
+        resTable = await Table.findOne({ status: "available", ...table });
         if (!resTable) {
-            return {
-                EC: 1,
-                EM: "Không còn bàn trống",
-                DT: ""
+            let tableBooked = await Booking.find({ payment_status: { $ne: "paid" }, date: booking.date });
+            resTable = await Table.findOne(
+                {
+                    status: "reserved",
+                    type: table.type,
+                    seat: { $gte: table.seat },
+                    _id: { $nin: tableBooked.map(item => item.table_id) }
+                });
+            console.log("resTable:", resTable);
+            if (!resTable) {
+                return {
+                    EC: 1,
+                    EM: "Không tìm thấy bàn phù hợp",
+                    DT: ""
+                }
+            } else {
+                let updatedTable = await tableService.updateTable(resTable._id, { status: "reserved" });
+                if (updatedTable.EC === 0) {
+                    let newBooking = await Booking.create({ ...booking, user_id, table_id: updatedTable.DT._id });
+                    console.log("newBooking:", newBooking);
+                    return {
+                        EC: 0,
+                        EM: "Đặt lịch thành công",
+                        DT: newBooking
+                    }
+                }
             }
         }
         else {
@@ -60,7 +86,7 @@ const createBooking = async (user_id, table, booking) => {
         }
     }
 }
-const getBookingById = async (id) => {
+const getBookingById = async (id) => { //completed
     try {
         let booking = await Booking.find({ _id: id });
         return {
@@ -77,9 +103,9 @@ const getBookingById = async (id) => {
         }
     }
 }
-const createComment = async (bookingId, userId, data) => {
+const createComment = async (bookingId, user_id, data) => { //completed
     try {
-        let booking = await Booking.findOneAndUpdate({ _id: bookingId, user_id: userId, payment_status: 'paid', status: 'completed' }, { $set: { ...data } }, { new: true });
+        let booking = await Booking.findOneAndUpdate({ _id: bookingId, user_id, payment_status: 'paid', status: 'completed' }, { $set: { ...data } }, { new: true });
         if (!booking) {
             return {
                 EC: 1,
@@ -123,7 +149,56 @@ const updateBooking = async (id, booking) => {
         }
     }
 }
-const createBookingWithTableId = async (id, booking) => {
+const updateOrderByBookingID = async (id, order) => { //order = {food_id, quantity}
+    try {
+        let booking = await getOrderDetailByBookingId(id);
+
+        const bookingMap = new Map(
+            booking.DT.map(item => [item.food_id, item])
+        );
+
+        // Xử lý các item trong order
+        const processedItems = order.reduce((acc, orderItem) => {
+            const bookingItem = bookingMap.get(orderItem.food_id);
+
+            if (bookingItem && bookingItem.quantity !== orderItem.quantity) {
+                // Nếu item đã tồn tại trong booking, cộng quantity
+                acc.push({
+                    _id: bookingItem._id,
+                    food_id: orderItem.food_id,
+                    quantity: orderItem.quantity
+                });
+            } else {
+                // Nếu là item mới, thêm vào với _id mới
+
+                acc.push({
+                    _id: `new_${orderItem.food_id}`, // hoặc generate _id theo logic của bạn
+                    food_id: orderItem.food_id,
+                    quantity: orderItem.quantity
+                });
+            }
+            return acc;
+        }, []);
+
+        console.log(processedItems);
+        // let updatedOrder = await Order.findByIdAndUpdate(id, { $set: order_detail }, { new: true });
+        // kiểm tra nếu food_id đã tồn tại thì cập nhật quantity, nếu chưa thì thêm mới
+
+        return {
+            EC: 0,
+            EM: "Cập nhật order thành công",
+            DT: updatedOrder
+        }
+    } catch (error) {
+        console.log(error);
+        return {
+            EC: 500,
+            EM: "Error from server",
+            DT: "",
+        }
+    }
+}
+const createBookingWithTableId = async (user_id, booking) => {
     let table = await tableService.getOneTable(booking.table_id);
     if (table.DT.status == "available") {
         let order_detail = [];
@@ -134,7 +209,7 @@ const createBookingWithTableId = async (id, booking) => {
             order_detail = list_order.DT.map(item => item._id);
         }
         // lấy mảng id món ăn để tạo booking
-        let newBooking = await Booking.create({ ...booking, user_id: id, order_detail });
+        let newBooking = await Booking.create({ ...booking, user_id, order_detail });
         return {
             EC: 0,
             EM: "Tạo đặt lịch thành công",
@@ -187,9 +262,10 @@ const getOrderDetailByBookingId = async (id) => {
         }
     }
 }
-const getAllBookingsByPhoneNumber = async (phone_number) => {
+const getAllBookingsByPhoneNumber = async (phone_number, page = 1, limit = 10, sortBy = "date", sortOrder = "asc", status) => {
     try {
         let user = await User.findOne({ phone_number });
+        console.log("user:", user);
         if (!user) {
             return {
                 EC: 1,
@@ -198,7 +274,11 @@ const getAllBookingsByPhoneNumber = async (phone_number) => {
             }
         }
         else {
-            let bookings = await Booking.find({ user_id: user._id });
+            let query = {};
+            if (status) {
+                query.status = status;
+            }
+            let bookings = await Booking.find({ user_id: user._id, ...query }).sort({ [sortBy]: sortOrder }).skip((page - 1) * limit).limit(limit);
             return {
                 EC: 0,
                 EM: "Lấy thông tin booking thành công",
@@ -261,22 +341,6 @@ const payment = async (id, data) => {
                 }
             }
         }
-        //     let updatedBooking = await Booking.findByIdAndUpdate(
-        //         id,
-        //         { $set: data },
-        //         { new: true });
-        //     if (updatedBooking.payment_status === 'paid' && updatedBooking.payment_method !== null && updateBooking.total !== 0) {
-        //         return {
-        //             EC: 0,
-        //             EM: "Thanh toán không thành công",
-        //             DT: ""
-        //         }
-        //     } else
-        //         return {
-        //             EC: 1,
-        //             EM: "Thanh toán thất bại",
-        //             DT: ""
-        //         }
     }
     catch (error) {
         console.log(error);
@@ -287,9 +351,13 @@ const payment = async (id, data) => {
         }
     }
 }
-const getAllBookingByUserId = async (id) => {
+const getAllBookingByUserId = async (id, page = 1, limit = 10, sortBy = "date", sortOrder = "asc", status) => {
+    const query = {};
+    if (status) {
+        query.status = status;
+    }
     try {
-        let bookings = await Booking.find({ user_id: id });
+        let bookings = await Booking.find({ user_id: id, ...query }).sort({ [sortBy]: sortOrder }).skip((page - 1) * limit).limit(limit);
         return {
             EC: 0,
             EM: "Lấy thông tin booking thành công",
