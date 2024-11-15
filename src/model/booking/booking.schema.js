@@ -1,4 +1,23 @@
 import { Schema, mongoose } from "mongoose";
+
+const orderSchema = new mongoose.Schema({
+  food_id: {
+    type: Schema.Types.ObjectId,
+    ref: 'Food',
+    required: true
+  },
+  quantity: {
+    type: Number,
+    required: true,
+    min: 1
+  },
+  status: {
+    type: String,
+    enum: ['pending', 'preparing', 'ready', 'served', 'cancelled'],
+    default: 'pending'
+  }
+});
+
 const bookingSchema = new mongoose.Schema({
   user_id: {
     type: Schema.Types.ObjectId,
@@ -18,11 +37,7 @@ const bookingSchema = new mongoose.Schema({
     ref: 'Table',
     required: true
   },
-  order_detail: [{
-    type: Schema.Types.ObjectId,
-    ref: 'Order',
-    default: []
-  }],
+  order_detail: [orderSchema],
   note: {
     type: String,
     default: ''
