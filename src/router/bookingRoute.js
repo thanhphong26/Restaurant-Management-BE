@@ -10,6 +10,8 @@ let initBookingRoute = (app) => {
     router.post('', authentication, checkRole('customer', 'staff'), bookingController.createBooking); // đặt lịch           
     router.put('/comment/:id', authentication, checkRole('customer'), bookingController.createComment);                     // bình luận và đánh giá sau bữa ăn 
     router.put('/:id', authentication, bookingController.updateBooking);                     // cập nhật thông tin booking theo id
+    router.get('/staff', authentication, checkRole('staff'), bookingController.getAllBookingsByPhoneNumber);                   //lấy danh sách booking theo số điện thoại của khách hàng (dành cho staff để kiểm tra thông tin đặt trước và order món ăn cho khách)
+
     return app.use("/api/booking", router);
 }
 export default initBookingRoute;
