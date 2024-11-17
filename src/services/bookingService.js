@@ -88,7 +88,7 @@ const createBooking = async (user_id, table, booking) => { //completed
 }
 const getBookingById = async (id) => { //completed
     try {
-        let booking = await Booking.find({ _id: id });
+        let booking = await Booking.findById(id);
         return {
             EC: 0,
             EM: "Lấy thông tin booking thành công",
