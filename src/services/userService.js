@@ -5,7 +5,7 @@ import { status } from "../utils/index.js";
 import Staff from '../model/staff/staff.schema.js';
 import sendEmail from './sendMailService.js';
 import { authentication } from '../middleware/JWTAction.js';
-const JWT_SECRET = 'pntpnt0123456789'; 
+const JWT_SECRET = 'pntpnt0123456789';
 
 const registerUser = async (userData) => {
     try {
@@ -44,7 +44,7 @@ const registerUser = async (userData) => {
             password: hashedPassword,
             status: status.ACTIVE
         });
-        newUser.role='customer';
+        newUser.role = 'customer';
         await newUser.save();
 
         return {
@@ -66,7 +66,7 @@ const registerUser = async (userData) => {
 const loginUser = async (username, password) => {
     try {
         const user = await User.findOne({ username });
-        
+
         if (!user) {
             return {
                 EC: 1,
@@ -85,11 +85,11 @@ const loginUser = async (username, password) => {
         }
 
         const accessToken = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '24h' });
-        const refreshToken= jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+        const refreshToken = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
         user.refreshToken.push(refreshToken);
         await user.save();
         const userObject = user.toObject();
-        
+
         delete userObject.password;
         delete userObject.refreshToken;
         delete userObject.__v;
@@ -155,7 +155,7 @@ const refreshToken = async (refreshToken) => {
 const getUserProfile = async (userId) => {
     try {
         const user = await User.findById(userId).select('-password');
-        
+
         if (!user) {
             return {
                 EC: 1,
@@ -164,7 +164,7 @@ const getUserProfile = async (userId) => {
             };
         }
         const userObject = user.toObject();
-        
+
         delete userObject.password;
         delete userObject.__v;
         return {
@@ -185,8 +185,8 @@ const getUserProfile = async (userId) => {
 
 const updateUserProfile = async (userId, updateData) => {
     try {
-        const updatedUser = await User.findByIdAndUpdate(userId, updateData, { new: true }).select('-password');
-        
+        const updatedUser = await User.findByIdAndUpdate(userId, { $set: { ...updateData } }, { new: true }).select('-password');
+
         if (!updatedUser) {
             return {
                 EC: 1,
@@ -296,7 +296,7 @@ const registerStaff = async (staffData) => {
                 status: status.ACTIVE
             })
 
-            if(!staff) {
+            if (!staff) {
                 await User.findByIdAndDelete(resgisterUserResponse.DT._id);
                 return {
                     EC: 1,
@@ -336,20 +336,20 @@ const forgotPassword = async (email) => {
                 DT: ''
             };
         }
-            const resetToken = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '30m' });
+        const resetToken = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '30m' });
 
-            user.resetPasswordToken = resetToken;
-            user.resetPasswordExpire = Date.now() + 3600000; 
-            await user.save();
-    
-            // Tạo link reset password
-            const resetLink = `http://localhost:3000/reset-password?token=${resetToken}`;
-    
-            // Gửi email chứa link reset password
-            await sendEmail({
-                to: user.email,
-                subject: 'Đặt lại mật khẩu',
-                html: `
+        user.resetPasswordToken = resetToken;
+        user.resetPasswordExpire = Date.now() + 3600000;
+        await user.save();
+
+        // Tạo link reset password
+        const resetLink = `http://localhost:3000/reset-password?token=${resetToken}`;
+
+        // Gửi email chứa link reset password
+        await sendEmail({
+            to: user.email,
+            subject: 'Đặt lại mật khẩu',
+            html: `
                     <p>Chào bạn,</p>
                     <p>Bạn đã yêu cầu đặt lại mật khẩu. Vui lòng click vào link bên dưới để thiết lập mật khẩu mới:</p>
                     <a href="${resetLink}">Đặt lại mật khẩu</a>
@@ -357,13 +357,13 @@ const forgotPassword = async (email) => {
                     <p>Trân trọng,<br>
                     Đội ngũ hỗ trợ</p>
                 `
-            });
-            return {
-                EC: 0,
-                EM: 'Gửi email thành công',
-                DT: ''
-            };
-        }
+        });
+        return {
+            EC: 0,
+            EM: 'Gửi email thành công',
+            DT: ''
+        };
+    }
     catch (error) {
         return {
             EC: 500,
@@ -383,7 +383,7 @@ const resetPassword = async (resetToken, newPassword) => {
                 DT: ''
             };
         }
-        const user = await User.findById(decoded.id, );
+        const user = await User.findById(decoded.id,);
         if (!user) {
             return {
                 EC: 1,
