@@ -7,12 +7,12 @@ let router = express.Router();
 let initLeaveApplicationRoute = (app) => {
     //leave application
     router.post("", authentication, checkRole('staff', 'manager'), leaveApplicationController.createLeaveApplication);
+    router.put("/check-in/:id", authentication, checkRole('staff', 'manager'), leaveApplicationController.checkIn);
+    router.put("/check-out/:id", authentication, checkRole('staff', 'manager'), leaveApplicationController.checkOut);
     router.put("/:id", authentication, checkRole('admin', 'manager'), leaveApplicationController.updateStatusLeaveApplication);
-    router.put("/check-in", authentication, checkRole('staff', 'manager'), leaveApplicationController.checkIn);
-    router.put("/check-out", authentication, checkRole('staff', 'manager'), leaveApplicationController.checkOut);
-    router.get("/time-keeping", authentication, checkRole('admin','manager'), leaveApplicationController.getTimeKeepingInMonth);
-    router.get("", authentication, checkRole('admin','manager'), leaveApplicationController.getListLeaveApplication);
-    
+    router.get("/time-keeping", authentication, checkRole('admin', 'manager'), leaveApplicationController.getTimeKeepingInMonth);
+    router.get("", authentication, checkRole('admin', 'manager'), leaveApplicationController.getListLeaveApplication);
+
     return app.use("/api/leave-applications", router);
 }
 export default initLeaveApplicationRoute;

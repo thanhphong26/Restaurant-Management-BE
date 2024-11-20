@@ -40,7 +40,6 @@ const getAllStaff = async (page, limit, search, filterType, filterValue) => {
                     position: 1,
                     salary: 1,
                     type: 1,
-                    point: 0,
                     status: 1,
                     username: '$user.username',
                     role: '$user.role',
@@ -131,6 +130,69 @@ const getStaffById = async (staffId) => {
                 EC: 0,
                 EM: "Không tìm thấy nhân viên",
                 DT: ""
+            }
+        }
+
+        return {
+            EC: 0,
+            EM: "Lấy thông tin nhân viên thành công",
+            DT: staffs
+        }
+
+    } catch (error) {
+        console.log(error);
+        return {
+            EC: 500,
+            EM: "Error from server",
+            DT: "",
+        }
+    }
+}
+
+const getStaffByUserId = async (userId) => {
+    try {
+        const pipeline = [{
+            $match: {
+                user_id: new ObjectId(userId),
+                status: status.ACTIVE
+            }
+        }, {
+            $lookup: {
+                from: 'users',
+                localField: 'user_id',
+                foreignField: '_id',
+                as: 'user'
+            }
+        }, {
+            $unwind: '$user'
+        }, {
+            $project: {
+                _id: '$_id',
+                user_id: 1,
+                position: 1,
+                salary: 1,
+                type: 1,
+                point: 1,
+                status: 1,
+                username: '$user.username',
+                role: '$user.role',
+                fist_name: '$user.first_name',
+                last_name: '$user.last_name',
+                email: '$user.email',
+                cid: '$user.cid',
+                address: '$user.address',
+                phone_number: '$user.phone_number',
+                avatar: '$user.avatar'
+            }
+        }];
+
+        let staffs = await Staff.aggregate(pipeline);
+
+        if (staffs.length === 0) {
+            return {
+                EC: 0,
+                EM: "Không tìm thấy thông tin nhân viên",
+                DT: []
             }
         }
 
@@ -314,6 +376,7 @@ const getTimeKeepingInMonthByStaffId = async (staffId1, month1, year1) => {
 export default {
     getAllStaff,
     getStaffById,
+    getStaffByUserId,
     getTimeKeepingInMonthByStaffId,
     createStaff,
     updateStaff,
