@@ -127,6 +127,7 @@ const updateIngredient = async (ingredientId, ingredientData) => {
 const deleteIngredient = async (ingredientId) => {
     try {
         const ingredient = await Ingredient.findByIdAndUpdate(ingredientId, { status: 'inactive' }, { new: true });
+        
         if (!ingredient) {
             return {
                 EC: 1,
@@ -200,57 +201,111 @@ const getAllIngredients = async (query = {}, page = 1, limit = 10) => {
     }
 }
 const updateIngredientInventory = async (ingredientId, updateData) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
-        const session = await mongoose.startSession();
-        session.startTransaction();
         const ingredient = await Ingredient.findById(ingredientId);
         if (!ingredient) {
-            return {
-                EC: 1,
-                EM: 'Nguyên liệu không tồn tại',
-                DT: ''
-            };
+            await session.abortTransaction();
+            session.endSession();
+            return { EC: 1, EM: 'Nguyên liệu không tồn tại', DT: '' };
         }
+
         let newInventory = ingredient.inventory;
-        let latestPrice;
+        let transactionPrice = null;
+
         if (updateData.type === 'import') {
             newInventory += updateData.quantity;
-        } else if (updateData.type === 'export') {
-            if (ingredient.inventory < updateData.quantity) {
-                return {
-                    EC: 1,
-                    EM: 'Số lượng xuất vượt quá tồn kho',
-                    DT: ''
+            transactionPrice = updateData.price;
+            
+            // Validate import data
+            if (!updateData.price || updateData.price < 0) {
+                throw new Error('Giá nhập không hợp lệ');
+            }
+        } 
+        else if (updateData.type === 'export') {
+            // Kiểm tra số lượng xuất
+            if (newInventory < updateData.quantity) {
+                await session.abortTransaction();
+                session.endSession();
+                return { 
+                    EC: 1, 
+                    EM: 'Số lượng xuất vượt quá tồn kho', 
+                    DT: '' 
                 };
             }
-            newInventory -= updateData.quantity;
-            const latestUpdate = await UpdateIngredient.findOne({
+
+            // Lấy danh sách các lô hàng nhập chưa hết
+            const importBatches = await UpdateIngredient.find({
                 ingredient_id: ingredientId,
-                type: 'import'
-            })
-            .sort({ date: -1 })
-            .exec();
-            latestPrice = latestUpdate ? latestUpdate.price : null;
-            updateData.price = latestPrice;
+                type: 'import',
+                quantity: { $gt: 0 }
+            }).sort({ date: 1 });
+
+            let remainingQuantityToExport = updateData.quantity;
+            let exportCostTotal = 0;
+            let exportQuantityTotal = 0;
+
+            for (let batch of importBatches) {
+                if (remainingQuantityToExport <= 0) break;
+
+                const quantityToUseFromBatch = Math.min(batch.quantity, remainingQuantityToExport);
+                
+                // Cập nhật số lượng của lô hàng
+                batch.quantity -= quantityToUseFromBatch;
+                await batch.save({ session });
+
+                // Tính toán chi phí xuất
+                exportCostTotal += quantityToUseFromBatch * batch.price;
+                exportQuantityTotal += quantityToUseFromBatch;
+
+                remainingQuantityToExport -= quantityToUseFromBatch;
+            }
+
+            // Kiểm tra đã xuất đủ số lượng chưa
+            if (remainingQuantityToExport > 0) {
+                await session.abortTransaction();
+                session.endSession();
+                return { 
+                    EC: 1, 
+                    EM: 'Không đủ số lượng nguyên liệu để xuất', 
+                    DT: '' 
+                };
+            }
+
+            // Tính giá xuất trung bình
+            transactionPrice = exportCostTotal / exportQuantityTotal;
+            newInventory -= updateData.quantity;
         }
+
+        // Cập nhật số lượng tồn kho
         ingredient.inventory = newInventory;
         await ingredient.save({ session });
 
-        const update = new UpdateIngredient(updateData);
-        await update.save({ session });
+        // Tạo giao dịch
+        const transaction = new UpdateIngredient({
+            ...updateData,
+            price: transactionPrice
+        });
+        await transaction.save({ session });
+
         await session.commitTransaction();
         session.endSession();
+
         return {
             EC: 0,
-            EM: 'Cập nhật số lượng nguyên liệu thành công',
-            DT: update
+            EM: updateData.type === 'import' ? 'Nhập nguyên liệu thành công' : 'Xuất nguyên liệu thành công',
+            DT: transaction
         };
     } catch (error) {
-        console.log(error);
-        return {
-            EC: 1,
-            EM: 'Lỗi khi cập nhật số lượng nguyên liệu',
-            DT: ''
+        await session.abortTransaction();
+        session.endSession();
+        console.error('Inventory Update Error:', error);
+        return { 
+            EC: 1, 
+            EM: error.message || 'Lỗi khi cập nhật số lượng nguyên liệu', 
+            DT: '' 
         };
     }
 }
@@ -320,16 +375,23 @@ const getStatistics=async(startDate,endDate)=>{
 const checkExpiredIngredients=async()=>{
     try{
         console.log('test')
-        const ingredients=await UpdateIngredient.find({
-            expiration_date:{
-                $lt: new Date()
-            },
+        const ingredients = await UpdateIngredient.find({
+            expiration_date: { $lt: new Date() },
             type: 'import'
-        });
+        }).populate('ingredient_id', 'name'); // Populate trường ingredient_id để lấy tên
+
+        const result = ingredients.map(item => ({
+            ingredientName: item.ingredient_id.name, // Tên nguyên liệu
+            expirationDate: item.expiration_date, // Ngày hết hạn
+            quantity: item.quantity, // Số lượng còn lại
+            price: item.price, // Giá nhập/xuất
+            supplier: item.supplier // Nhà cung cấp (nếu có)
+        }));
+
         return {
             EC: 0,
             EM: 'Kiểm tra nguyên liệu hết hạn thành công',
-            DT: ingredients
+            DT: result
         };
     }catch(error){
         console.log(error);

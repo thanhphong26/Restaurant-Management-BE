@@ -6,9 +6,9 @@ dotenv.config();
 let router = express.Router();
 let initApplicationRoute = (app) => {
     
-    router.get("", authentication, checkRole('admin','manager'), applicationController.getAllApplicationsByStatus);
+    router.get("/", authentication, checkRole('admin','manager'), applicationController.getAllApplicationsByStatus);
     router.get("/:id", authentication, checkRole('admin','manager'), applicationController.getApplicationById);
-    router.post("", applicationController.createApplication);
+    router.post("/", applicationController.createApplication);
     router.put("/:id", authentication, checkRole('admin','manager'),  applicationController.updateApplication);
     router.delete("/:id", applicationController.deleteApplication);
     

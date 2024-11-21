@@ -92,6 +92,8 @@ const loginUser = async (username, password) => {
 
         delete userObject.password;
         delete userObject.refreshToken;
+        delete userObject.resetPasswordToken;
+        delete userObject.resetPasswordExpire;
         delete userObject.__v;
         return {
             EC: 0,

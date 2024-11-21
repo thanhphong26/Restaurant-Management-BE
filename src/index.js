@@ -19,6 +19,7 @@ import initTableRoute from './router/tableRoute.js';
 import initReportRoute from './router/reportRoute.js';
 import cookieParser from 'cookie-parser';
 import initPaymentRoute from './router/paymentRoute.js';
+import { errorHandler } from './middleware/JWTAction.js';
 dotenv.config();
 
 const app = express();
@@ -47,10 +48,7 @@ initTableRoute(app);
 initBookingRoute(app);
 initReportRoute(app);
 initPaymentRoute(app);
-
-app.get('/', (req, res) => {
-    res.send('Hello World 123');
-});
+app.use(errorHandler);
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
