@@ -3,6 +3,7 @@ import Table from "../model/table/table.schema.js";
 import User from "../model/user/user.schema.js";
 import tableService from "./tableService.js";
 import orderService from "./orderService.js";
+import { status } from "../utils/index.js";
 import Promotion from "../model/promotions/promotion.schema.js";
 const getAllBookings = async (page, limit, sortBy, sortOrder, status) => {
     // const pipeline = [
@@ -136,7 +137,7 @@ const updateBooking = async (id, booking) => {
             { new: true });
         return {
             EC: 0,
-            EM: "Cập nhật đặt lịch thành công",
+            EM: "Cập nhật thành công",
             DT: updatedBooking
         }
     }
@@ -201,15 +202,9 @@ const updateOrderByBookingID = async (id, order) => { //order = {food_id, quanti
 const createBookingWithTableId = async (user_id, booking) => {
     let table = await tableService.getOneTable(booking.table_id);
     if (table.DT.status == "available") {
-        let order_detail = [];
-        //Tạo order
-        if (booking?.order_detail?.length) {
-            //có đặt món
-            const list_order = await orderService.createOrder(booking.order_detail);
-            order_detail = list_order.DT.map(item => item._id);
-        }
-        // lấy mảng id món ăn để tạo booking
-        let newBooking = await Booking.create({ ...booking, user_id, order_detail });
+        //update table status
+        tableService.findByIdAndUpdate(booking.table_id, { status: "occupied" });
+        let newBooking = await Booking.create({ ...booking, user_id });
         return {
             EC: 0,
             EM: "Tạo đặt lịch thành công",
@@ -226,15 +221,7 @@ const createBookingWithTableId = async (user_id, booking) => {
             }
         }
         else {
-            let order_detail = [];
-            //Tạo order
-            if (booking?.order_detail?.length) {
-                //có đặt món
-                const list_order = await orderService.createOrder(booking.order_detail);
-                order_detail = list_order.DT.map(item => item._id);
-            }
-            // lấy mảng id món ăn để tạo booking
-            let newBooking = await Booking.create({ ...booking, user_id: id, order_detail });
+            let newBooking = await Booking.create({ ...booking, user_id });
             return {
                 EC: 0,
                 EM: "Tạo đặt lịch thành công",
@@ -243,6 +230,7 @@ const createBookingWithTableId = async (user_id, booking) => {
         }
     }
 }
+
 const getOrderDetailByBookingId = async (id) => {
     try {
         let booking = await Booking.findById(id);
@@ -262,30 +250,104 @@ const getOrderDetailByBookingId = async (id) => {
         }
     }
 }
-const getAllBookingsByPhoneNumber = async (phone_number, page = 1, limit = 10, sortBy = "date", sortOrder = "asc", status) => {
+const getAllBookingsByPhoneNumber = async (phone_number, page = 1, limit = 10, sortBy = "date", sortOrder = -1) => {
     try {
-        let user = await User.findOne({ phone_number });
-        console.log("user:", user);
-        if (!user) {
+        const pipeline = [
+            {
+                $match: {
+                    phone_number: phone_number,
+                }
+            },
+            {
+                $lookup: {
+                    from: "bookings",
+                    localField: "_id",
+                    foreignField: "user_id",
+                    as: "booking"
+                }
+            },
+            {
+                $unwind: "$booking"
+            },
+            {
+                $match: {
+                    "booking.payment_status": "pending"
+                }
+            },
+            {
+                $lookup: {
+                    from: "tables", // Tên collection lưu thông tin bàn
+                    localField: "booking.table_id", // Trường trong bookingSchema
+                    foreignField: "_id", // Trường trong tables collection
+                    as: "table_info" // Tên field mới để chứa kết quả join
+                }
+            },
+            {
+                $project: {
+                    _id: 1,
+                    first_name: 1,
+                    last_name: 1,
+                    email: 1,
+                    phone_number: 1,
+                    avatar: 1,
+                    address: 1,
+                    dob: 1,
+
+                    booking: {
+                        _id: "$booking._id",
+                        date: "$booking.date",
+                        time: "$booking.time",
+                        table: {
+                            $arrayElemAt: ["$table_info", 0], // Lấy thông tin của table_id từ table_info (vì table_info là một mảng)
+                        },
+                        order_detail: {
+                            $map: {
+                                input: "$order_detail",
+                                as: "order",
+                                in: {
+                                    food_id: "$$order.food_id",
+                                    quantity: "$$order.quantity",
+                                    status: "$$order.status"
+                                }
+                            }
+                        },
+                        note: "$booking.note",
+                        payment_status: "$booking.payment_status",
+                        status: "$booking.status"
+                    }
+                }
+            },
+            {
+                $sort: {
+                    [sortBy]: sortOrder
+                }
+            },
+            {
+                $skip: (page - 1) * limit
+            },
+            {
+                $limit: limit
+            }
+        ];
+        let infor = await User.aggregate(pipeline);
+        console.log("infor: ", infor);
+        let count = infor.length;
+        let totalPages = Math.ceil(count / limit);
+        if (infor.length === 0) {
             return {
                 EC: 1,
-                EM: "Không tìm thấy người dùng",
-                DT: ""
+                EM: "Không tìm thấy thông tin đặt trước của số điện thoại này",
+                DT: [],
             }
         }
-        else {
-            let query = {};
-            if (status) {
-                query.status = status;
-            }
-            let bookings = await Booking.find({ user_id: user._id, ...query }).sort({ [sortBy]: sortOrder }).skip((page - 1) * limit).limit(limit);
-            return {
-                EC: 0,
-                EM: "Lấy thông tin booking thành công",
-                DT: bookings
-            }
+        return {
+            EC: 0,
+            EM: "Lấy danh sách đặt trước thành công",
+            DT: { infor, totalPages, count }
+            // DT: ""
         }
-    } catch (error) {
+    }
+    catch (error) {
         console.log(error);
         return {
             EC: 500,
@@ -382,5 +444,5 @@ export default {
     createBookingWithTableId,
     getOrderDetailByBookingId,
     getAllBookingsByPhoneNumber,
-    payment
+    payment,
 }
