@@ -86,7 +86,7 @@ const updateStatusLeaveApplication = async (leaveApplicationId, status) => {
     }
 };
 
-const checkIn = async (staffId, shiftId) => {
+const checkIn = async (staffId) => {
     try {
         const today = DateTime.now().setZone(zone);
         console.log('Start today: ', today.startOf('day'), staffId);
@@ -104,7 +104,7 @@ const checkIn = async (staffId, shiftId) => {
         }
         let timeKeeping = await TimeKeeping.findOne({
             staff_id: staffId,
-            shift_id: shiftId,
+            shift_id: shift._id,
         });
         if (timeKeeping) {
             return {
@@ -122,7 +122,7 @@ const checkIn = async (staffId, shiftId) => {
             const diff = today.diff(start_shift, ['hours', 'minutes', 'seconds']);
             let check_in = await TimeKeeping.create({
                 staff_id: staffId,
-                shift_id: shiftId,
+                shift_id: shift._id,
                 check_in: today,
                 status_check_in: diff.minutes < 0 ? 'ontime' : 'late'
             })
@@ -143,42 +143,50 @@ const checkIn = async (staffId, shiftId) => {
     }
 }
 //checkout
-const checkOut = async (staffId, shiftId) => {
+const checkOut = async (staffId) => {
     try {
-
         const today = DateTime.now().setZone(zone);
         let shift = await Shift.findOne({
             date: today.startOf('day'),
             list_staff: staffId
         })
-        const date = DateTime.fromJSDate(shift.date).setZone(zone)
-        const end_shift = DateTime.local(date.get('year'), date.get('month'), date.get('day'), shiftNumber[shift.shift_number + 1]).setZone(zone);
-        // const day = DateTime.local(date.get('year'), date.get('month'), date.get('day'), 13, 50).setZone(zone);
-        // Tính khoảng thời gian giữa thời gian hiện tại và time_shift
-        const diff = today.diff(end_shift, ['hours', 'minutes', 'seconds']);
-        let timeKeeping = await TimeKeeping.findOneAndUpdate({
-            staff_id: staffId,
-            check_out: null,
-            shift_id: shiftId
-        },
-            {
-                $set: {
-                    check_out: today,
-                    status_check_out: diff.minutes < 0 ? 'early' : diff.hours < 1 ? 'ontime' : 'late'
-                }
+        if (shift) {
+            const date = DateTime.fromJSDate(shift.date).setZone(zone)
+            const end_shift = DateTime.local(date.get('year'), date.get('month'), date.get('day'), shiftNumber[shift.shift_number + 1]).setZone(zone);
+            // const day = DateTime.local(date.get('year'), date.get('month'), date.get('day'), 13, 50).setZone(zone);
+            // Tính khoảng thời gian giữa thời gian hiện tại và time_shift
+            const diff = today.diff(end_shift, ['hours', 'minutes', 'seconds']);
+            let timeKeeping = await TimeKeeping.findOneAndUpdate({
+                staff_id: staffId,
+                check_out: null,
+                shift_id: shift._id
             },
-            { new: true });
-        if (!timeKeeping) {
+                {
+                    $set: {
+                        check_out: today,
+                        status_check_out: diff.minutes < 0 ? 'early' : diff.hours < 1 ? 'ontime' : 'late'
+                    }
+                },
+                { new: true });
+            if (!timeKeeping) {
+                return {
+                    EC: 1,
+                    EM: 'Nhân viên chưa check in hoặc đã check out',
+                    DT: ''
+                }
+            } else {
+                return {
+                    EC: 0,
+                    EM: 'Check out thành công',
+                    DT: timeKeeping
+                }
+            }
+        }
+        else {
             return {
                 EC: 1,
-                EM: 'Nhân viên chưa check in hoặc đã check out',
+                EM: 'Bạn không có ca làm việc hôm nay',
                 DT: ''
-            }
-        } else {
-            return {
-                EC: 0,
-                EM: 'Check out thành công',
-                DT: timeKeeping
             }
         }
     } catch (error) {
