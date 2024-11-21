@@ -125,6 +125,7 @@ const getOrderDetailByBookingId = async (req, res) => {
 }
 const getAllBookingsByPhoneNumber = async (req, res) => {
     try {
+        console.log(req.query.phone_number);
         let response = await bookingService.getAllBookingsByPhoneNumber(req.query.phone_number);
         return res.status(200).json({
             EC: response.EC,
