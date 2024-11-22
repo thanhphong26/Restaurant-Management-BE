@@ -1,4 +1,5 @@
 import bookingService from "../services/bookingService.js";
+import orderService from "../services/orderService.js";
 
 const getAllBookings = async (req, res) => {
     try {
@@ -36,7 +37,7 @@ const createBooking = async (req, res) => {
         const { table, booking } = req.body;
         let response = {};
         if (req.user.role === 'staff') {
-            response = await bookingService.createBookingWithTableId(req.user.id, req.body.booking);
+            response = await bookingService.createBooking(req.user.id, table, booking);
         } else {
             response = await bookingService.createBooking(req.user.id, table, booking);
         }
@@ -126,7 +127,7 @@ const getOrderDetailByBookingId = async (req, res) => {
 const getAllBookingsByPhoneNumber = async (req, res) => {
     try {
         console.log(req.query.phone_number);
-        let response = await bookingService.getAllBookingsByPhoneNumber(req.query.phone_number);
+        let response = await bookingService.getAllBookingsByPhoneNumber(req.query.phone_number, req.query.page, req.query.limit);
         return res.status(200).json({
             EC: response.EC,
             EM: response.EM,
@@ -158,6 +159,57 @@ const payment = async (req, res) => {
         });
     }
 }
+const serveBooking = async (req, res) => {
+    try {
+        let response = await bookingService.serveBooking(req.params.id, req.body.list_staff);
+        return res.status(200).json({
+            EC: response.EC,
+            EM: response.EM,
+            DT: response.DT
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            EC: 500,
+            EM: "Error from server",
+            DT: "",
+        });
+    }
+}
+const updateOrder = async (req, res) => {
+    try {
+        let response = await orderService.updateOrder(req.params.id, req.body.order_detail);
+        return res.status(200).json({
+            EC: response.EC,
+            EM: response.EM,
+            DT: response.DT
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            EC: 500,
+            EM: "Error from server",
+            DT: "",
+        });
+    }
+}
+const getOrderById = async (req, res) => {
+    try {
+        let response = await orderService.getOrderById(req.params.id);
+        return res.status(200).json({
+            EC: response.EC,
+            EM: response.EM,
+            DT: response.DT
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            EC: 500,
+            EM: "Error from server",
+            DT: "",
+        });
+    }
+}
 export default {
     getAllBookings,
     createBooking,
@@ -166,5 +218,8 @@ export default {
     updateBooking,
     getOrderDetailByBookingId,
     getAllBookingsByPhoneNumber,
-    payment
+    payment,
+    serveBooking,
+    updateOrder,
+    getOrderById
 }

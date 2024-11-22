@@ -17,9 +17,11 @@ import initApplicationRoute from './router/applicationRoute.js';
 import initRecruimentRoute from './router/recruimentRoute.js';
 import initTableRoute from './router/tableRoute.js';
 import initReportRoute from './router/reportRoute.js';
+import initUpdateIngredientRoute from './router/updateIngredientRoute.js';
 import cookieParser from 'cookie-parser';
 import initPaymentRoute from './router/paymentRoute.js';
 import { errorHandler } from './middleware/JWTAction.js';
+import initOderRoute from './router/OrderRoute.js';
 dotenv.config();
 
 const app = express();
@@ -48,6 +50,8 @@ initTableRoute(app);
 initBookingRoute(app);
 initReportRoute(app);
 initPaymentRoute(app);
+initUpdateIngredientRoute(app);
+initOderRoute(app);
 app.use(errorHandler);
 
 app.listen(port, () => {

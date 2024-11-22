@@ -1,11 +1,16 @@
 import Application from '../model/application/application.schema.js';
-
-const getAllApplicationsByStatus = async (page, limit, search, status) => {
+import { ObjectId } from "mongodb";
+const getAllApplicationsByStatus = async (page, limit, search, status, recruitmentId) => {
     try {
         // Stage match để lọc theo status và điều kiện tìm kiếm
+        let conditions = {};
+        if (status) {
+            conditions.status = status;
+        }
         const matchStage = {
             $match: {
-                status: status,
+                ...conditions,
+                ...(recruitmentId && { recruitment_id: new ObjectId(recruitmentId) }),
                 ...(search && {
                     full_name: { $regex: search, $options: 'i' }
                 }),

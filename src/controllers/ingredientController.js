@@ -87,8 +87,7 @@ const getAllIngredients = async (req, res) => {
 }
 const updateIngredientInventory = async (req, res) => {
     try {
-        const { id } = req.query;
-        const response = await ingredientService.updateIngredientInventory(id, req.body);
+        const response = await ingredientService.updateIngredientInventory(req.params.id, req.body);
         return res.status(200).json({
             EC: response.EC,
             EM: response.EM,
@@ -142,7 +141,8 @@ const getStatistics = async (req, res) => {
 }
 const checkExpiredIngredients = async (req, res) => {
     try {
-        const response = await ingredientService.checkExpiredIngredients();
+        const { page, limit}=req.query;
+        const response = await ingredientService.checkExpiredIngredients(page, limit);
         return res.status(200).json({
             EC: response.EC,
             EM: response.EM,

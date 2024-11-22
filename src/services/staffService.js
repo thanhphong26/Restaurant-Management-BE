@@ -87,7 +87,7 @@ const getAllStaff = async (page, limit, search, filterType, filterValue) => {
             },
             { $count: "total" }
         ];
-
+        const staffs = await Staff.aggregate(pipeline);
         const countResult = await Staff.aggregate(countPipeline);
         const total = countResult.length > 0 ? countResult[0].total : 0;
 

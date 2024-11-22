@@ -8,12 +8,11 @@ const ingredientSchema = new mongoose.Schema({
     },
     inventory: {
         type: Number,
-        required: true,
         min: 0,
     },
     unit: {
         type: String,
-        enum: ['kg', 'l'],
+        enum: ['kg', 'l', 'khác'],
         required: true,
     },
     description: String,

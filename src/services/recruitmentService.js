@@ -2,11 +2,13 @@ import Recruiment from "../model/recruiment/recruiment.schema.js";
 import { status } from "../utils/index.js";
 import mongoose from "mongoose";
 
-const getAllRecruiment = async (page, limit, search) => {
+const getAllRecruiment = async (page, limit, search, status) => {
     try {
         const matchStage = {
             $match: {
-                status: status.ACTIVE,
+                ...(status && {
+                        status: status
+                    }),
                 ...(search && {
                     position: { $regex: search, $options: 'i' }
                 })
