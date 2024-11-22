@@ -252,77 +252,78 @@ const getOrderDetailByBookingId = async (id) => {
 }
 const getAllBookingsByPhoneNumber = async (phone_number, page = 1, limit = 10) => {
     try {
-        const pipeline = [
-            {
-                $match: {
-                    phone_number: phone_number,
-                }
-            },
-            {
-                $lookup: {
-                    from: "bookings",
-                    localField: "_id",
-                    foreignField: "user_id",
-                    as: "booking"
-                }
-            },
-            {
-                $unwind: "$booking"
-            },
-            {
-                $match: {
-                    "booking.payment_status": "pending"
-                }
-            },
-            {
-                $lookup: {
-                    from: "tables", // Tên collection lưu thông tin bàn
-                    localField: "booking.table_id", // Trường trong bookingSchema
-                    foreignField: "_id", // Trường trong tables collection
-                    as: "table_info" // Tên field mới để chứa kết quả join
-                }
-            },
-            {
-                $project: {
-                    _id: 1,
-                    first_name: 1,
-                    last_name: 1,
-                    email: 1,
-                    phone_number: 1,
-                    avatar: 1,
-                    address: 1,
-                    dob: 1,
+        const pipelineMain = [{
+            $match: {
+                phone_number: phone_number,
+            }
+        },
+        {
+            $lookup: {
+                from: "bookings",
+                localField: "_id",
+                foreignField: "user_id",
+                as: "booking"
+            }
+        },
+        {
+            $unwind: "$booking"
+        },
+        {
+            $match: {
+                "booking.payment_status": "pending"
+            }
+        },
+        {
+            $lookup: {
+                from: "tables", // Tên collection lưu thông tin bàn
+                localField: "booking.table_id", // Trường trong bookingSchema
+                foreignField: "_id", // Trường trong tables collection
+                as: "table_info" // Tên field mới để chứa kết quả join
+            }
+        },
+        {
+            $project: {
+                _id: 1,
+                first_name: 1,
+                last_name: 1,
+                email: 1,
+                phone_number: 1,
+                avatar: 1,
+                address: 1,
+                dob: 1,
 
-                    booking: {
-                        _id: "$booking._id",
-                        date: "$booking.date",
-                        time: "$booking.time",
-                        table: {
-                            name: { $arrayElemAt: ["$table_info.name", 0] },
-                            type: { $arrayElemAt: ["$table_info.type", 0] }
-                        },
-                        order_detail: {
-                            $map: {
-                                input: "$order_detail",
-                                as: "order",
-                                in: {
-                                    food_id: "$$order.food_id",
-                                    quantity: "$$order.quantity",
-                                    status: "$$order.status"
-                                }
+                booking: {
+                    _id: "$booking._id",
+                    date: "$booking.date",
+                    time: "$booking.time",
+                    table: {
+                        name: { $arrayElemAt: ["$table_info.name", 0] },
+                        type: { $arrayElemAt: ["$table_info.type", 0] }
+                    },
+                    order_detail: {
+                        $map: {
+                            input: "$order_detail",
+                            as: "order",
+                            in: {
+                                food_id: "$$order.food_id",
+                                quantity: "$$order.quantity",
+                                status: "$$order.status"
                             }
-                        },
-                        note: "$booking.note",
-                        payment_status: "$booking.payment_status",
-                        status: "$booking.status"
-                    }
+                        }
+                    },
+                    note: "$booking.note",
+                    payment_status: "$booking.payment_status",
+                    status: "$booking.status"
                 }
-            },
-            {
-                $sort: {
-                    ["booking.date"]: -1
-                }
-            },
+            }
+        },
+        {
+            $sort: {
+                ["booking.date"]: -1
+            }
+        }]
+        const pipeline = [
+            ...pipelineMain,
             {
                 $skip: (page - 1) * limit
             },
@@ -331,9 +332,6 @@ const getAllBookingsByPhoneNumber = async (phone_number, page = 1, limit = 10) =
             }
         ];
         let infor = await User.aggregate(pipeline);
-        console.log("infor: ", infor);
-        let count = infor.length;
-        let totalPages = Math.ceil(count / limit);
         if (infor.length === 0) {
             return {
                 EC: 1,
@@ -341,10 +339,11 @@ const getAllBookingsByPhoneNumber = async (phone_number, page = 1, limit = 10) =
                 DT: [],
             }
         }
+        let booking = await User.aggregate([...pipelineMain, { $count: "total" }]);
         return {
             EC: 0,
             EM: "Lấy danh sách đặt trước thành công",
-            DT: { infor, totalPages, count }
+            DT: { infor, total: booking[0].total }
             // DT: ""
         }
     }
