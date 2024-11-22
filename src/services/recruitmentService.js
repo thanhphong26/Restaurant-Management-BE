@@ -4,15 +4,17 @@ import mongoose from "mongoose";
 
 const getAllRecruiment = async (page, limit, search) => {
     try {
+        const matchStage = {
+            $match: {
+                status: status.ACTIVE,
+                ...(search && {
+                    position: { $regex: search, $options: 'i' }
+                })
+            }
+        };
+
         const pipeline = [
-            {
-                $match: {
-                    status: status.ACTIVE,
-                    ...(search && {
-                        position: { $regex: search, $options: 'i' }
-                    })
-                }
-            },
+            matchStage,
             {
                 $project: {
                     _id: 0,
@@ -32,29 +34,34 @@ const getAllRecruiment = async (page, limit, search) => {
         ];
 
         let recruiments = await Recruiment.aggregate(pipeline);
-        let count = recruiments.length
-        let totalPages = Math.ceil(count / limit);
+
+        const countPipeline = [
+            matchStage, 
+            { $count: "total" }  
+        ];
+        const countResult = await Recruiment.aggregate(countPipeline);
+        const total = countResult.length > 0 ? countResult[0].total : 0;
 
         if (recruiments.length === 0) {
             return {
                 EC: 1,
                 EM: "Không có tuyển dụng nào",
                 DT: []
-            }
+            };
         }
 
         return {
             EC: 0,
             EM: "Lấy thông tin tuyển dụng thành công",
-            DT: {recruiments, totalPages}
-        }
+            DT: { recruiments, total }
+        };
     } catch (error) {
         console.log(error);
         return {
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi từ server",
             DT: "",
-        }
+        };
     }
 }
 
