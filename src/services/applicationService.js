@@ -2,15 +2,19 @@ import Application from '../model/application/application.schema.js';
 
 const getAllApplicationsByStatus = async (page, limit, search, status) => {
     try {
+        // Stage match để lọc theo status và điều kiện tìm kiếm
+        const matchStage = {
+            $match: {
+                status: status,
+                ...(search && {
+                    full_name: { $regex: search, $options: 'i' }
+                }),
+            }
+        };
+
+        // Pipeline để lấy các đơn ứng tuyển theo trang và điều kiện tìm kiếm
         let pipeline = [
-            {
-                $match: {
-                    status: status,
-                    ...(search && {
-                        full_name: { $regex: search, $options: 'i' }
-                    }),
-                }
-            },
+            matchStage,
             {
                 $project: {
                     _id: 0,
@@ -30,30 +34,43 @@ const getAllApplicationsByStatus = async (page, limit, search, status) => {
             { $limit: +limit }
         ];
 
+        // Lấy các đơn ứng tuyển theo trang và điều kiện tìm kiếm
         let applications = await Application.aggregate(pipeline);
-        let count = applications.length;
-        let totalPages = Math.ceil(count / limit);
+
+        // Truy vấn để đếm tổng số đơn ứng tuyển thỏa mãn điều kiện tìm kiếm mà không bị giới hạn bởi $skip và $limit
+        const countPipeline = [
+            matchStage,  // Điều kiện tìm kiếm giống như ở trên
+            { $count: "total" }  // Đếm tổng số đơn ứng tuyển thỏa mãn điều kiện
+        ];
+
+        // Lấy tổng số ứng tuyển từ kết quả đếm
+        const countResult = await Application.aggregate(countPipeline);
+        const total = countResult.length > 0 ? countResult[0].total : 0;
+
+        // Nếu không có đơn ứng tuyển nào thỏa mãn điều kiện
         if (applications.length === 0) {
             return {
                 EC: 404,
                 EM: "Không tìm thấy đơn ứng tuyển",
                 DT: "",
-            }
+            };
         }
+
+        // Trả về dữ liệu đơn ứng tuyển và tổng số ứng tuyển
         return {
             EC: 0,
             EM: "Lấy danh sách đơn ứng tuyển thành công",
-            DT: {applications, totalPages}
-        }
+            DT: { applications, total }
+        };
     } catch (error) {
         console.log(error);
         return {
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi từ server",
             DT: "",
-        }
+        };
     }
-}
+};
 
 const getApplicationById = async (applicationId) => {
     try {
@@ -82,6 +99,27 @@ const getApplicationById = async (applicationId) => {
 
 const createApplication = async (application) => {
     try {
+        // Kiểm tra xem email đã tồn tại chưa
+        const existingEmail = await Application.findOne({ email: application.email });
+        if (existingEmail) {
+            return {
+                EC: 400,
+                EM: "Email đã tồn tại",
+                DT: ""
+            };
+        }
+
+        // Kiểm tra xem CID đã tồn tại chưa
+        const existingCid = await Application.findOne({ cid: application.cid });
+        if (existingCid) {
+            return {
+                EC: 400,
+                EM: "CID đã tồn tại",
+                DT: ""
+            };
+        }
+
+        // Tạo mới đơn ứng tuyển nếu không có lỗi
         let newApplication = await Application.create({
             recruitment_id: application.recruitment_id,
             full_name: application.full_name,
@@ -93,22 +131,23 @@ const createApplication = async (application) => {
             about: application.about,
             require: application.require,
             status: 'Not viewed'
-        })
+        });
 
         return {
             EC: 0,
             EM: "Tạo đơn ứng tuyển thành công",
             DT: newApplication
-        }
+        };
+
     } catch (error) {
         console.log(error);
         return {
             EC: 500,
             EM: "Tạo đơn ứng tuyển thất bại",
             DT: "",
-        }
+        };
     }
-}
+};
 
 const updateApplication = async (applicationId, application) => {
     try {

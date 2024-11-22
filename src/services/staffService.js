@@ -3,6 +3,7 @@ import TimeKeeping from "../model/timeKeeping/timeKeeping.schema.js";
 import { status } from "../utils/index.js";
 import { ObjectId } from "mongodb";
 
+
 const getAllStaff = async (page, limit, search, filterType, filterValue) => {
     try {
         const pipeline = [
@@ -55,24 +56,48 @@ const getAllStaff = async (page, limit, search, filterType, filterValue) => {
             { $limit: +limit }
         ];
 
-        let staffs = await Staff.aggregate(pipeline);
-        let count = staffs.length;
-        const totalPages = Math.ceil(count / limit);
+        // Truy vấn để đếm tổng số nhân viên thỏa mãn điều kiện
+        const countPipeline = [
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'user_id',
+                    foreignField: '_id',
+                    as: 'user'
+                }
+            },
+            {
+                $unwind: '$user'
+            },
+            {
+                $addFields: {
+                    fullName: { $concat: ['$user.first_name', ' ', '$user.last_name'] }
+                }
+            },
+            {
+                $match: {
+                    status: status.ACTIVE,
+                    ...(search && {
+                        fullName: { $regex: search, $options: 'i' }
+                    }),
+                    ...((filterType === "position" || filterType === "type") && filterValue && {
+                        [filterType]: filterValue
+                    })
+                }
+            },
+            { $count: "total" }
+        ];
+        const staffs = await Staff.aggregate(pipeline);
+        const countResult = await Staff.aggregate(countPipeline);
+        const total = countResult.length > 0 ? countResult[0].total : 0;
 
-        if (staffs.length === 0) {
-            return {
-                EC: 0,
-                EM: "Không tìm thấy nhân viên",
-                DT: ""
-            };
-        }
-
+        // Trả về kết quả
         return {
             EC: 0,
             EM: "Lấy thông tin nhân viên thành công",
             DT: {
                 staffs,
-                totalPages
+                total
             }
         };
 
@@ -80,7 +105,7 @@ const getAllStaff = async (page, limit, search, filterType, filterValue) => {
         console.log(error);
         return {
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi từ server",
             DT: ""
         };
     }

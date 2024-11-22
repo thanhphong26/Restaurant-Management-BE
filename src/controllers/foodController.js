@@ -35,8 +35,10 @@ const deleteFood = async (req, res) => {
 };
 const getAllFoods = async (req, res) => {
     try {
-        const { page, limit, sortBy, sortOrder, type, status } = req.query;
-        const response = await foodService.getAllFoods(page, limit, sortBy, sortOrder, type, status);
+        let page = req.query.page || 1;
+        let limit = req.query.limit || 10;
+        const { sortBy, sortOrder, type, status, search } = req.query;
+        const response = await foodService.getAllFoods(page, limit, sortBy, sortOrder, type, status, search);
         return res.status(200).json({
             EC: response.EC,
             EM: response.EM,

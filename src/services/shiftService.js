@@ -14,7 +14,23 @@ const getAllShifts = async (page, limit, search, startDate, endDate) => {
             }
         }
 
-        const pipeline = [
+        // Stage match để lọc theo điều kiện ngày và tìm kiếm
+        const matchStage = {
+            $match: {
+                ...(startDate && endDate && { 
+                    date: { 
+                        $gte: new Date(startDate), 
+                        $lte: new Date(endDate) 
+                    }
+                }),
+                ...(search && {
+                    fullName: { $regex: search, $options: 'i' }
+                })
+            }
+        };
+
+        // Pipeline để lấy các ca làm việc với phân trang
+        let pipeline = [
             {
                 $lookup: {
                     from: 'staffs', 
@@ -38,19 +54,7 @@ const getAllShifts = async (page, limit, search, startDate, endDate) => {
                     fullName: { $concat: ['$userDetails.first_name', ' ', '$userDetails.last_name'] }
                 }
             },
-            {
-                $match: {
-                    ...(startDate && endDate && { 
-                        date: { 
-                            $gte: new Date(startDate), 
-                            $lte: new Date(endDate) 
-                        }
-                    }),
-                    ...(search && {
-                        fullName: { $regex: search, $options: 'i' }
-                    })
-                }
-            },
+            matchStage,  // Áp dụng filter với điều kiện ngày và tìm kiếm
             {
                 $project: {
                     _id: 0,
@@ -67,34 +71,58 @@ const getAllShifts = async (page, limit, search, startDate, endDate) => {
             { $limit: +limit }
         ];
 
+        // Lấy các ca làm việc thỏa mãn điều kiện tìm kiếm và phân trang
         let shifts = await Shift.aggregate(pipeline);
-        let count = shifts.length;
-        const totalPages = Math.ceil(count / limit);
 
-        if (shifts.length === 0) {
-            return {
-                EC: 1,
-                EM: "Không có ca làm việc nào",
-                DT: []
-            };
-        }
+        // Truy vấn để đếm tổng số ca làm việc thỏa mãn điều kiện tìm kiếm mà không phân trang
+        const countPipeline = [
+            {
+                $lookup: {
+                    from: 'staffs', 
+                    localField: 'list_staff', 
+                    foreignField: '_id', 
+                    as: 'staffDetails'
+                }
+            },
+            { $unwind: '$staffDetails' },
+            {
+                $lookup: {
+                    from: 'users', 
+                    localField: 'staffDetails.user_id', 
+                    foreignField: '_id', 
+                    as: 'userDetails'
+                }
+            },
+            { $unwind: '$userDetails' },
+            {
+                $addFields: {
+                    fullName: { $concat: ['$userDetails.first_name', ' ', '$userDetails.last_name'] }
+                }
+            },
+            matchStage,  // Áp dụng filter với điều kiện ngày và tìm kiếm
+            { $count: "total" }  // Đếm tổng số ca làm việc thỏa mãn điều kiện
+        ];
 
+        // Lấy tổng số ca làm việc từ kết quả đếm
+        const countResult = await Shift.aggregate(countPipeline);
+        const total = countResult.length > 0 ? countResult[0].total : 0;
+
+        // Trả về dữ liệu ca làm việc và tổng số ca làm việc
         return {
             EC: 0,
             EM: "Lấy thông tin ca làm việc thành công",
-            DT: {shifts, totalPages}
+            DT: { shifts, total }
         };
 
     } catch (error) {
         console.log(error);
         return {
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi từ server",
             DT: "",
         };
     }
 };
-
 
 const getShiftsByStaffId = async (staffId) => {
     try {
