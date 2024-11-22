@@ -37,8 +37,8 @@ const getAllFoods = async (req, res) => {
     try {
         let page = req.query.page || 1;
         let limit = req.query.limit || 10;
-        const { sortBy, sortOrder, type, status } = req.query;
-        const response = await foodService.getAllFoods(page, limit, sortBy, sortOrder, type, status);
+        const { sortBy, sortOrder, type, status, search } = req.query;
+        const response = await foodService.getAllFoods(page, limit, sortBy, sortOrder, type, status, search);
         return res.status(200).json({
             EC: response.EC,
             EM: response.EM,

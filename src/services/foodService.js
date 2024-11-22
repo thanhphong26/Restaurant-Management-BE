@@ -62,7 +62,7 @@ const createFood = async (foodData) => {
       };
   }
 }
-const getAllFoods = async (page, limit, sortBy = 'name', sortOrder = 'asc', type, status) => {
+const getAllFoods = async (page, limit, sortBy = 'name', sortOrder = 'asc', type, status, search) => {
     try {
         const pipeline = [];
         page = Number(page);
@@ -75,6 +75,12 @@ const getAllFoods = async (page, limit, sortBy = 'name', sortOrder = 'asc', type
         }
         if (status) {
             matchStage.status = status;
+        }
+        if(search){
+            matchStage.$or = [
+                { name: { $regex: search, $options: 'i' } },
+                { description: { $regex: search, $options: 'i' } }
+            ];
         }
         if (Object.keys(matchStage).length > 0) {
             pipeline.push({ $match: matchStage });
