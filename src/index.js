@@ -20,6 +20,7 @@ import initReportRoute from './router/reportRoute.js';
 import cookieParser from 'cookie-parser';
 import initPaymentRoute from './router/paymentRoute.js';
 import { errorHandler } from './middleware/JWTAction.js';
+import initOderRoute from './router/OrderRoute.js';
 dotenv.config();
 
 const app = express();
@@ -48,6 +49,7 @@ initTableRoute(app);
 initBookingRoute(app);
 initReportRoute(app);
 initPaymentRoute(app);
+initOderRoute(app);
 app.use(errorHandler);
 
 app.listen(port, () => {

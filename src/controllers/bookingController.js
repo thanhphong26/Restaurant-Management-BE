@@ -1,4 +1,5 @@
 import bookingService from "../services/bookingService.js";
+import orderService from "../services/orderService.js";
 
 const getAllBookings = async (req, res) => {
     try {
@@ -36,7 +37,7 @@ const createBooking = async (req, res) => {
         const { table, booking } = req.body;
         let response = {};
         if (req.user.role === 'staff') {
-            response = await bookingService.createBookingWithTableId(req.user.id, req.body.booking);
+            response = await bookingService.createBookingWithTableId(req.user.id, booking);
         } else {
             response = await bookingService.createBooking(req.user.id, table, booking);
         }
@@ -175,6 +176,23 @@ const serveBooking = async (req, res) => {
         });
     }
 }
+const updateOrder = async (req, res) => {
+    try {
+        let response = await orderService.updateOrder(req.params.id, req.body.order_detail);
+        return res.status(200).json({
+            EC: response.EC,
+            EM: response.EM,
+            DT: response.DT
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            EC: 500,
+            EM: "Error from server",
+            DT: "",
+        });
+    }
+}
 export default {
     getAllBookings,
     createBooking,
@@ -184,5 +202,6 @@ export default {
     getOrderDetailByBookingId,
     getAllBookingsByPhoneNumber,
     payment,
-    serveBooking
+    serveBooking,
+    updateOrder,
 }
