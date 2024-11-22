@@ -5,7 +5,8 @@ const getAllRecruitment = async (req, res) => {
         let page = req.query.page || 1;
         let limit = req.query.limit || 10;
         let search = req.query.search || "";
-        let response = await recruitmentService.getAllRecruiment(page, limit, search);
+        let status = req.query.status || "active";
+        let response = await recruitmentService.getAllRecruiment(page, limit, search, status);
         return res.status(200).json({
             EC: response.EC,
             EM: response.EM,
