@@ -8,7 +8,6 @@ let initFoodRoute = (app) => {
     router.get('', foodController.getAllFoods);
     router.post('',  authentication, checkRole('admin','manager'), foodController.createFood);
     router.get('/stats', foodController.getFoodStats); 
-    router.get('/search', foodController.searchFoods);
     router.get('/:id', foodController.getFoodById);
     router.delete('/:id', authentication, checkRole('admin','manager'), foodController.deleteFood);
     router.get('/type/:type', foodController.getFoodsByType);

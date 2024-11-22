@@ -17,6 +17,7 @@ import initApplicationRoute from './router/applicationRoute.js';
 import initRecruimentRoute from './router/recruimentRoute.js';
 import initTableRoute from './router/tableRoute.js';
 import initReportRoute from './router/reportRoute.js';
+import initUpdateIngredientRoute from './router/updateIngredientRoute.js';
 import cookieParser from 'cookie-parser';
 import initPaymentRoute from './router/paymentRoute.js';
 import { errorHandler } from './middleware/JWTAction.js';
@@ -48,6 +49,7 @@ initTableRoute(app);
 initBookingRoute(app);
 initReportRoute(app);
 initPaymentRoute(app);
+initUpdateIngredientRoute(app);
 app.use(errorHandler);
 
 app.listen(port, () => {

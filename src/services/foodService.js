@@ -82,6 +82,7 @@ const getAllFoods = async (page, limit, sortBy = 'name', sortOrder = 'asc', type
                 { description: { $regex: search, $options: 'i' } }
             ];
         }
+        
         if (Object.keys(matchStage).length > 0) {
             pipeline.push({ $match: matchStage });
         }

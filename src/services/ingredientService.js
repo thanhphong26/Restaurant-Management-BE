@@ -4,7 +4,8 @@ import UpdateIngredient from "../model/updateIngredient/updateIngredient.schema.
 const createIngredient = async (ingredientData) => { 
     try {
         //validate input data
-        const allowFields=['name','inventory','unit','description','type'];
+        const allowFields=['name','unit','description','type'];
+        const inventory=0;
         const sanitizedData={};
         Object.keys(ingredientData).forEach((field)=>{
             if(allowFields.includes(field)){
@@ -18,21 +19,14 @@ const createIngredient = async (ingredientData) => {
                 DT: ''
             };
         }
-        if(!sanitizedData.name||!sanitizedData.inventory||!sanitizedData.unit||!sanitizedData.type){
+        if(!sanitizedData.name||!sanitizedData.unit||!sanitizedData.type){
             return {
                 EC: 1,
                 EM: 'Không được để trống thông tin nguyên liệu',
                 DT: ''
             };
         }
-        if(sanitizedData.inventory<0){
-            return {
-                EC: 1,
-                EM: 'Tồn kho không hợp lệ',
-                DT: ''
-            };
-        }
-        const newIngredient = new Ingredient(sanitizedData);
+        const newIngredient = new Ingredient({...sanitizedData, inventory});
         //validate exist ingredient
         const existingIngredient = await Ingredient.findOne({ name: sanitizedData.name });
         if (existingIngredient) {
@@ -126,7 +120,7 @@ const updateIngredient = async (ingredientId, ingredientData) => {
 }
 const deleteIngredient = async (ingredientId) => {
     try {
-        const ingredient = await Ingredient.findByIdAndUpdate(ingredientId, { status: 'inactive' }, { new: true });
+        const ingredient = await Ingredient.findByIdAndDelete(ingredientId);
         
         if (!ingredient) {
             return {
@@ -393,14 +387,28 @@ const getStatistics=async(startDate,endDate)=>{
         };
     }
 }
-const checkExpiredIngredients=async()=>{
+const checkExpiredIngredients=async(page=1, limit=10)=>{
     try{
         console.log('test')
+        const skip = (page - 1) * limit;
+
+        // Lấy dữ liệu từ cơ sở dữ liệu với phân trang
         const ingredients = await UpdateIngredient.find({
             expiration_date: { $lt: new Date() },
+            quantity: { $gt: 0 },
             type: 'import'
-        }).populate('ingredient_id', 'name'); // Populate trường ingredient_id để lấy tên
+        })
+            .populate('ingredient_id', 'name') // Populate trường ingredient_id để lấy tên
+            .skip(skip) // Bỏ qua số lượng bản ghi
+            .limit(limit); // Giới hạn số lượng bản ghi
 
+        // Đếm tổng số bản ghi thỏa điều kiện
+        const total = await UpdateIngredient.countDocuments({
+            expiration_date: { $lt: new Date() },
+            type: 'import'
+        });
+
+        // Tạo kết quả trả về
         const result = ingredients.map(item => ({
             ingredientName: item.ingredient_id.name, // Tên nguyên liệu
             expirationDate: item.expiration_date, // Ngày hết hạn
@@ -412,9 +420,15 @@ const checkExpiredIngredients=async()=>{
         return {
             EC: 0,
             EM: 'Kiểm tra nguyên liệu hết hạn thành công',
-            DT: result
+            DT: {
+                data: result,
+                currentPage: page,
+                totalPages: Math.ceil(total / limit),
+                totalItems: total,
+                limit
+            }
         };
-    }catch(error){
+    } catch (error) {
         console.log(error);
         return {
             EC: 1,
@@ -422,7 +436,7 @@ const checkExpiredIngredients=async()=>{
             DT: ''
         };
     }
-}
+};
 export default {
     createIngredient,
     updateIngredient,
