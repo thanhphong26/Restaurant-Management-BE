@@ -434,6 +434,24 @@ const getAllBookingByUserId = async (id, page = 1, limit = 10, sortBy = "date", 
         }
     }
 }
+const serveBooking = async (id, list_staff) => {
+    try {
+        let booking = await Booking.findByIdAndUpdate(id, { $addToSet: { list_staff: { $each: list_staff } } }, { new: true });
+        return {
+            EC: 0,
+            EM: "Cập nhật thành công",
+            DT: booking
+        }
+    } catch (error) {
+        console.log(error);
+        return {
+            EC: 500,
+            EM: "Error from server",
+            DT: "",
+        }
+    }
+}
+
 export default {
     getAllBookings,
     getAllBookingByUserId,
@@ -445,4 +463,5 @@ export default {
     getOrderDetailByBookingId,
     getAllBookingsByPhoneNumber,
     payment,
+    serveBooking,
 }
