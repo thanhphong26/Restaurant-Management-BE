@@ -5,7 +5,8 @@ import tableService from "./tableService.js";
 import orderService from "./orderService.js";
 import { status } from "../utils/index.js";
 import Promotion from "../model/promotions/promotion.schema.js";
-const getAllBookings = async (page, limit, sortBy, sortOrder, status) => {
+import mongoose from "mongoose";
+const getAllBookings = async (page, limit, sortBy = 'date', sortOrder = 'asc', status) => {
     // const pipeline = [
     //     {
     //         $
@@ -89,7 +90,43 @@ const createBooking = async (user_id, table, booking) => { //completed
 }
 const getBookingById = async (id) => { //completed
     try {
-        let booking = await Booking.findById(id);
+        const pipeline = [
+            {
+                $match: {
+                    _id: new mongoose.Types.ObjectId(id)
+                }
+            },
+            {
+                $lookup: {
+                    from: "tables", // Tên collection lưu thông tin bàn
+                    localField: "table_id", // Trường trong bookingSchema
+                    foreignField: "_id", // Trường trong tables collection
+                    as: "table_info" // Tên field mới để chứa kết quả join
+                }
+            },
+            {
+                $project: {
+                    _id: 1,
+                    date: 1,
+                    time: 1,
+                    table: {
+                        name: { $arrayElemAt: ["$table_info.name", 0] },
+                        type: { $arrayElemAt: ["$table_info.type", 0] }
+                    },
+                    order_detail: 1,
+                    note: 1,
+                    total: 1,
+                    voucher: 1,
+                    payment_method: 1,
+                    payment_status: 1,
+                    list_staff: 1,
+                    comment: 1,
+                    rate: 1,
+                    status: 1
+                }
+            }
+        ]
+        let booking = await Booking.aggregate(pipeline);
         return {
             EC: 0,
             EM: "Lấy thông tin booking thành công",

@@ -37,7 +37,7 @@ const createBooking = async (req, res) => {
         const { table, booking } = req.body;
         let response = {};
         if (req.user.role === 'staff') {
-            response = await bookingService.createBookingWithTableId(req.user.id, booking);
+            response = await bookingService.createBooking(req.user.id, table, booking);
         } else {
             response = await bookingService.createBooking(req.user.id, table, booking);
         }
