@@ -250,7 +250,7 @@ const getOrderDetailByBookingId = async (id) => {
         }
     }
 }
-const getAllBookingsByPhoneNumber = async (phone_number, page = 1, limit = 10, sortBy = "date", sortOrder = -1) => {
+const getAllBookingsByPhoneNumber = async (phone_number, page = 1, limit = 10) => {
     try {
         const pipeline = [
             {
@@ -298,7 +298,8 @@ const getAllBookingsByPhoneNumber = async (phone_number, page = 1, limit = 10, s
                         date: "$booking.date",
                         time: "$booking.time",
                         table: {
-                            $arrayElemAt: ["$table_info", 0], // Lấy thông tin của table_id từ table_info (vì table_info là một mảng)
+                            name: { $arrayElemAt: ["$table_info.name", 0] },
+                            type: { $arrayElemAt: ["$table_info.type", 0] }
                         },
                         order_detail: {
                             $map: {
@@ -319,14 +320,14 @@ const getAllBookingsByPhoneNumber = async (phone_number, page = 1, limit = 10, s
             },
             {
                 $sort: {
-                    [sortBy]: sortOrder
+                    ["booking.date"]: -1
                 }
             },
             {
                 $skip: (page - 1) * limit
             },
             {
-                $limit: limit
+                $limit: +limit
             }
         ];
         let infor = await User.aggregate(pipeline);
