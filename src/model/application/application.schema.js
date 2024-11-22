@@ -29,7 +29,7 @@ const applicationSchema = new mongoose.Schema({
     require: String,
     status: {
         type: String,
-        enum: ['Not viewed', 'Viewed', 'Qualified', 'Invited', 'Successful', 'Rejected'],
+        enum: ['Not viewed', 'Viewed', 'Successful', 'Rejected'],
         default: 'Not viewed',
     }
 });
