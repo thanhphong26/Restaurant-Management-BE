@@ -178,12 +178,33 @@ const getAllIngredients = async (query = {}, page = 1, limit = 10) => {
     const options = {
         page: parseInt(page),
         limit: parseInt(limit),
-        sort: { createdAt: -1 }
+        sort: query.sort || { createdAt: -1 },
+        select: query.select || '-__v' // Exclude version key
     };
+
     const filter = {};
+    
+    // Flexible text search across multiple fields
+    if (query.searchTerm) {
+        filter.$or = [
+            { name: { $regex: query.searchTerm, $options: 'i' } },
+            { type: { $regex: query.searchTerm, $options: 'i' } },
+            { status: { $regex: query.searchTerm, $options: 'i' } }
+        ];
+    }
+
+    // Specific field filters
     if (query.name) filter.name = { $regex: query.name, $options: 'i' };
     if (query.type) filter.type = query.type;
     if (query.status) filter.status = query.status;
+    
+    // Range filters for numeric fields
+    if (query.minInventory) filter.inventory = { $gte: query.minInventory };
+    if (query.maxInventory) filter.inventory = { 
+        ...filter.inventory, 
+        $lte: query.maxInventory 
+    };
+
     try {
         const ingredients = await Ingredient.paginate(filter, options);
         return {
@@ -192,11 +213,11 @@ const getAllIngredients = async (query = {}, page = 1, limit = 10) => {
             DT: ingredients
         };
     } catch (error) {
-        console.log(error);
+        console.error('Ingredient fetch error:', error);
         return {
             EC: 1,
             EM: 'Lỗi khi lấy danh sách nguyên liệu',
-            DT: ''
+            DT: null
         };
     }
 }

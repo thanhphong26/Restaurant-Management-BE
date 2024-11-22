@@ -62,23 +62,53 @@ const createFood = async (foodData) => {
       };
   }
 }
-const getAllFoods=async(page=1, limit = 10, sortBy = 'name', sortOrder = 'asc', type, status)=>{
-    try{
-        let query = {};
-        if(type){
-            query.type = type;
+const getAllFoods = async (page, limit, sortBy = 'name', sortOrder = 'asc', type, status) => {
+    try {
+        const pipeline = [];
+        page = Number(page);
+        limit = Number(limit);
+
+        // Match (lọc)
+        const matchStage = {};
+        if (type) {
+            matchStage.type = type;
         }
-        if(status){
-            query.status = status;
+        if (status) {
+            matchStage.status = status;
         }
-        const foods = await Food.find(query)
-        .sort({ [sortBy]: sortOrder })
-        .skip((page - 1) * limit)
-        .limit(limit);
+        if (Object.keys(matchStage).length > 0) {
+            pipeline.push({ $match: matchStage });
+        }
+
+        // Sort
+        pipeline.push({ $sort: { [sortBy]: sortOrder === 'asc' ? 1 : -1 } });
+
+        // Facet để xử lý cả data và totalCount
+        pipeline.push({
+            $facet: {
+                data: [
+                    { $skip: (page - 1) * limit },
+                    { $limit: limit }
+                ],
+                totalCount: [{ $count: 'count' }] // Tổng số lượng
+            }
+        });
+
+        const result = await Food.aggregate(pipeline);
+
+        // Xử lý kết quả trả về
+        const foods = result[0].data || [];
+        const totalCount = result[0].totalCount[0]?.count || 0;
+
         return {
             EC: 0,
             EM: 'Lấy danh sách món ăn thành công',
-            DT: foods
+            DT: {
+                foods,
+                totalCount,
+                totalPages: Math.ceil(totalCount / limit),
+                currentPage: page
+            }
         };
     } catch (error) {
         console.log(error);
@@ -88,7 +118,9 @@ const getAllFoods=async(page=1, limit = 10, sortBy = 'name', sortOrder = 'asc', 
             DT: ''
         };
     }
-}
+};
+
+
 const getFoodById = async (foodId) => {
   try {
     const food = await Food.findById(foodId);
