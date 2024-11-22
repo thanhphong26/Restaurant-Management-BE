@@ -13,7 +13,7 @@ const registerUser = async (userData) => {
             $or: [{ username: userData.username }, { email: userData.email }, { cid: userData.cid }]
         });
         //validate input data
-        if (!userData.username || !userData.password || !userData.last_name || !userData.first_name || !userData.email || !userData.cid || !userData.address || !userData.phone_number || !userData.dob) {
+        if (!userData.username || !userData.password || !userData.last_name || !userData.first_name || !userData.email || !userData.cid || !userData.address || !userData.phone_number) {
             return {
                 EC: 1,
                 EM: 'Vui lòng điền đầy đủ thông tin',

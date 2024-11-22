@@ -9,7 +9,7 @@ const staffSchema = new mongoose.Schema({
     position: {
         type: String,
         required: true,
-        enum: ['admin', 'waiter', 'chef', 'manager', 'cashier'],
+        enum: ['staff'],
     },
     salary: {
         type: Number,
