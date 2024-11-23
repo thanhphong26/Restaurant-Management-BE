@@ -3,7 +3,7 @@ import paymentService from '../services/paymentService.js';
 
 const createPayment = async (req, res) => {
     try {
-        let response = await paymentService.createPayment(req.query.bookingId, req.body);
+        let response = await paymentService.createPayment(req.body.id, req.body);
         return res.status(200).json(response);
     } catch (error) {
         return res.status(500).json({
@@ -17,14 +17,12 @@ const createPayment = async (req, res) => {
 const callbackPayment = async (req, res) => {
     // cập nhật dữ liệu vào database ()
     const { amount, extraData, payType } = req.body;
-    let [bookingId, voucher] = extraData.split(" ");
     // cập nhật dữ liệu vào database
     const data = {
-        voucher,
         payment_method: payType,
-        amount: amount
+        total: amount
     }
-    await bookingService.payment(bookingId, data);
+    await bookingService.payment(extraData, data);
 }
 export default {
     createPayment,

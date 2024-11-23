@@ -7,13 +7,13 @@ const createPayment = async (bookingId, paymentData) => {
     var secretKey = 'K951B6PE1waDMi640xX08PD3vg6EkVlz';
     var orderInfo = 'pay with MoMo';
     var partnerCode = 'MOMO';
-    var redirectUrl = 'https://webhook.site/b3088a6a-2d17-4f8d-a383-71389a6c600b';
-    var ipnUrl = 'https://7bdb-2001-ee0-25f-d0be-599c-be8b-e62e-491e.ngrok-free.app/api/payment/callback';
+    var redirectUrl = 'https://3263-113-161-74-106.ngrok-free.app';
+    var ipnUrl = 'https://3263-113-161-74-106.ngrok-free.app/api/payment/callback';
     var requestType = "payWithMethod";
     var amount = total;
     var orderId = partnerCode + new Date().getTime();
     var requestId = orderId;
-    var extraData = bookingId + " " + voucher;
+    var extraData = bookingId;
     var orderGroupId = '';
     var autoCapture = true;
     var lang = 'vi';

@@ -397,48 +397,44 @@ const payment = async (id, data) => {
     try {
         let checkBooking = await Booking.findById(id);
         if (checkBooking.payment_status === 'paid') {
-            return {
-                EC: 1,
-                EM: "Hóa đơn đã được thanh toán",
-                DT: ""
-            }
+            return;
         } else {
-            // kiểm tra mã giảm giá
-            let Code = await Promotion.findOne({ code: data.voucher });
-            if (!Code) {
+            // // kiểm tra mã giảm giá
+            // let Code = await Promotion.findOne({ code: data.voucher });
+            // if (!Code) {
+            //     return {
+            //         EC: 1,
+            //         EM: "Mã giảm giá không hợp lệ",
+            //         DT: ""
+            //     }
+            // }
+            // else {
+            //     // kiểm tra điều kiện mã giảm giá (status, startDate, endDate, condition)
+            //     if (Code.status !== 'active' && new Date() > Code.startDate && new Date() < Code.endDate && Code.quantity > 0) {
+            //         return {
+            //             EC: 1,
+            //             EM: "Không thể sử dụng mã giảm giá",
+            //             DT: ""
+            //         }
+            //     } else {
+            // thực hiện cập nhật promotion, booking, user 
+            // let promotion = await Promotion.findByIdAndUpdate(Code._id, { $inc: { quantity: -1 } }, { new: true });
+            let booking = await Booking.findByIdAndUpdate(id, { $set: { ...data, payment_status: 'paid' } }, { new: true });
+            // let user = await User.findByIdAndUpdate(booking.user_id, { $push: { save_voucher: data.voucher } }, { new: true });
+            if (booking)
+                return {
+                    EC: 0,
+                    EM: "Thanh toán thành công",
+                    DT: booking
+                }
+            else
                 return {
                     EC: 1,
-                    EM: "Mã giảm giá không hợp lệ",
+                    EM: "Thanh toán không thất bại",
                     DT: ""
                 }
-            }
-            else {
-                // kiểm tra điều kiện mã giảm giá (status, startDate, endDate, condition)
-                if (Code.status !== 'active' && new Date() > Code.startDate && new Date() < Code.endDate && Code.quantity > 0) {
-                    return {
-                        EC: 1,
-                        EM: "Không thể sử dụng mã giảm giá",
-                        DT: ""
-                    }
-                } else {
-                    // thực hiện cập nhật promotion, booking, user 
-                    let promotion = await Promotion.findByIdAndUpdate(Code._id, { $inc: { quantity: -1 } }, { new: true });
-                    let booking = await Booking.findByIdAndUpdate(id, { $set: { ...data, payment_status: 'paid' } }, { new: true });
-                    let user = await User.findByIdAndUpdate(booking.user_id, { $push: { save_voucher: data.voucher } }, { new: true });
-                    if (promotion && booking && user)
-                        return {
-                            EC: 0,
-                            EM: "Thanh toán thành công",
-                            DT: booking
-                        }
-                    else
-                        return {
-                            EC: 1,
-                            EM: "Thanh toán không thất bại",
-                            DT: ""
-                        }
-                }
-            }
+            //     }
+            // }
         }
     }
     catch (error) {
