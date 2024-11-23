@@ -193,7 +193,7 @@ const getStaffByUserId = async (userId) => {
         }, {
             $project: {
                 _id: '$_id',
-                user_id: 1,
+                user_id: 1, 
                 position: 1,
                 salary: 1,
                 type: 1,

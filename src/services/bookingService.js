@@ -46,7 +46,6 @@ const createBooking = async (user_id, table, booking) => { //completed
                     seat: { $gte: table.seat },
                     _id: { $nin: tableBooked.map(item => item.table_id) }
                 });
-            console.log("resTable:", resTable);
             if (!resTable) {
                 return {
                     EC: 1,
@@ -485,6 +484,166 @@ const serveBooking = async (id, list_staff) => {
     }
 }
 
+const getBookingByUserId = async (page, limit, status, date, user_id) => {
+    try {
+        // Tạo matchStage cơ bản với user_id
+        const matchStage = {
+            user_id: new mongoose.Types.ObjectId(user_id),
+        };
+
+        // Thêm điều kiện status nếu được cung cấp
+        if (status) {
+            matchStage.status = status;
+        }
+
+        // Thêm điều kiện date nếu được cung cấp
+        if (date) {
+            const startOfDay = new Date(date);
+            startOfDay.setHours(0, 0, 0, 0);
+            const endOfDay = new Date(date);
+            endOfDay.setHours(23, 59, 59, 999);
+
+            matchStage.date = { 
+                $gte: startOfDay, 
+                $lte: endOfDay 
+            };
+        }
+
+        const pipeline = [
+            { $match: matchStage },
+            { $sort: { date: -1 } },
+            {
+                $lookup: {
+                    from: 'tables',
+                    localField: 'table_id',
+                    foreignField: '_id',
+                    as: 'table'
+                }
+            },
+            {
+                $unwind: '$table'
+            },
+            {
+                $lookup: {
+                    from: 'foods',
+                    let: { orderDetails: '$order_detail' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $in: ['$_id', {
+                                        $map: {
+                                            input: '$$orderDetails',
+                                            as: 'order',
+                                            in: '$$order.food_id'
+                                        }
+                                    }]
+                                }
+                            }
+                        }
+                    ],
+                    as: 'foods'
+                }
+            },
+            {
+                $addFields: {
+                    order_detail: {
+                        $map: {
+                            input: '$order_detail',
+                            as: 'order',
+                            in: {
+                                food: {
+                                    $arrayElemAt: [
+                                        {
+                                            $filter: {
+                                                input: '$foods',
+                                                as: 'food',
+                                                cond: { $eq: ['$$food._id', '$$order.food_id'] }
+                                            }
+                                        },
+                                        0
+                                    ]
+                                },
+                                quantity: '$$order.quantity',
+                                status: '$$order.status'
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                $project: {
+                    _id: 1,
+                    date: 1,
+                    time: 1,
+                    table: {
+                        name: '$table.name',
+                        type: '$table.type'
+                    },
+                    order_detail: {
+                        $map: {
+                            input: '$order_detail',
+                            as: 'item',
+                            in: {
+                                food_id: '$$item.food._id',
+                                name: '$$item.food.name',
+                                price: '$$item.food.price',
+                                image: '$$item.food.image',
+                                quantity: '$$item.quantity',
+                                status: '$$item.status'
+                            }
+                        }
+                    },
+                    note: 1,
+                    total: 1,
+                    voucher: 1,
+                    payment_method: 1,
+                    payment_status: 1,
+                    list_staff: 1,
+                    comment: 1,
+                    rate: 1,
+                    status: 1
+                }
+            },
+            {
+                $facet: {
+                    metadata: [
+                        { $count: "total" },
+                        { $addFields: { page: page, limit: +limit } },
+                    ],
+                    data: [
+                        { $skip: (page - 1) * +limit },
+                        { $limit: +limit },
+                    ],
+                },
+            },
+        ];
+
+        const result = await Booking.aggregate(pipeline);
+
+        // Trích xuất dữ liệu kết quả
+        const bookings = result[0]?.data || [];
+        const metadata = result[0]?.metadata[0] || { total: 0, page, limit };
+
+        return {
+            EC: 0,
+            EM: "Lấy thông tin booking thành công",
+            DT: {
+                metadata,
+                bookings,
+            },
+        };
+    } catch (error) {
+        console.error(error);
+        return {
+            EC: 500,
+            EM: "Error from server",
+            DT: "",
+        };
+    }
+};
+
+
 export default {
     getAllBookings,
     getAllBookingByUserId,
@@ -497,4 +656,5 @@ export default {
     getAllBookingsByPhoneNumber,
     payment,
     serveBooking,
+    getBookingByUserId,
 }

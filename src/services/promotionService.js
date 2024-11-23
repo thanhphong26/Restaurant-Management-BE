@@ -2,38 +2,40 @@ import { status } from "../utils/index.js";
 import mongoose from "mongoose";
 import Promotion from "../model/promotions/promotion.schema.js";
 import User from "../model/user/user.schema.js";
+
 const getPromotionsValid = async (page, limit, search, userId) => {
     try {
+        // Bắt đầu tạo query lọc
+        const matchConditions = {
+            status: status.ACTIVE,
+            quantity: { $gt: 0 },
+            startDate: { $lte: new Date() },
+            endDate: { $gte: new Date() },
+        };
+
+        // Nếu có từ khóa tìm kiếm, thêm vào điều kiện tìm kiếm
+        if (search) {
+            matchConditions.code = { $regex: search, $options: 'i' }; // Tìm kiếm không phân biệt chữ hoa hay thường
+        }
+
+        // Nếu có userId, loại bỏ các mã khuyến mãi đã lưu của người dùng
         let savedVouchers = [];
         if (userId) {
-            const user = await User.findById(userId).select("save_voucher");
+            const user = await User.findById(userId).select('save_voucher');
             if (!user) {
                 return {
                     EC: 404,
-                    EM: "User not found",
-                    DT: ""
+                    EM: 'User not found',
+                    DT: ''
                 };
             }
             savedVouchers = user.save_voucher || [];
+            matchConditions.code = { ...matchConditions.code, $nin: savedVouchers }; // Loại bỏ các mã đã lưu
         }
 
-        // Stage match để lọc theo các điều kiện tìm kiếm
-        const matchStage = {
-            $match: {
-                status: status.ACTIVE,
-                quantity: { $gt: 0 },
-                startDate: { $lte: new Date() },
-                endDate: { $gte: new Date() },
-                ...(search && {
-                    code: { $regex: search, $options: 'i' }
-                }),
-                ...(userId && { code: { $nin: savedVouchers } }) // Exclude saved vouchers if userId is provided
-            }
-        };
-
-        // Pipeline để lấy các khuyến mãi theo trang và điều kiện tìm kiếm
-        let pipeline = [
-            matchStage,
+        // Pipeline để lấy khuyến mãi với điều kiện lọc
+        const pipeline = [
+            { $match: matchConditions },
             {
                 $project: {
                     _id: 0,
@@ -52,34 +54,35 @@ const getPromotionsValid = async (page, limit, search, userId) => {
             { $limit: +limit }
         ];
 
-        // Lấy các khuyến mãi thỏa mãn điều kiện tìm kiếm và phân trang
-        let promotions = await Promotion.aggregate(pipeline);
+        // Lấy danh sách khuyến mãi
+        const promotions = await Promotion.aggregate(pipeline);
 
-        // Truy vấn để đếm tổng số khuyến mãi thỏa mãn điều kiện tìm kiếm mà không phân trang
+        // Truy vấn để đếm tổng số khuyến mãi thỏa mãn điều kiện tìm kiếm
         const countPipeline = [
-            matchStage,  // Điều kiện tìm kiếm giống như ở trên
-            { $count: "total" }  // Đếm tổng số khuyến mãi thỏa mãn điều kiện
+            { $match: matchConditions },
+            { $count: 'total' }
         ];
 
         // Lấy tổng số khuyến mãi từ kết quả đếm
         const countResult = await Promotion.aggregate(countPipeline);
         const total = countResult.length > 0 ? countResult[0].total : 0;
 
-        // Trả về dữ liệu khuyến mãi và tổng số khuyến mãi
+        // Trả về kết quả
         return {
             EC: 0,
-            EM: "Lấy danh sách khuyến mãi thành công",
+            EM: 'Lấy danh sách khuyến mãi thành công',
             DT: { promotions, total }
         };
     } catch (error) {
         console.log(error);
         return {
             EC: 500,
-            EM: "Lỗi từ server",
-            DT: "",
+            EM: 'Lỗi từ server',
+            DT: ''
         };
     }
 };
+
 
 const getPromotionById = async (promotionId) => {
     try {
@@ -107,20 +110,29 @@ const getPromotionById = async (promotionId) => {
     }
 }
 
+function generateRandomString() {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'; // Chữ viết hoa và số
+    let result = '';
+    for (let i = 0; i < 6; i++) {
+        const randomIndex = Math.floor(Math.random() * characters.length);
+        result += characters[randomIndex];
+    }
+    return result;
+}
+
 const createPromotion = async (promotion) => {
     try {
-        const existingPromotion = await Promotion.findOne({ code: promotion.code });
+        let code;
+        let isDuplicate = true;
 
-        if (existingPromotion) {
-            return {
-                EC: 400,
-                EM: "Mã khuyến mãi đã tồn tại",
-                DT: "",
-            };
+        while (isDuplicate) {
+            code = generateRandomString();
+            const existingPromotion = await Promotion.findOne({ code: code });
+            isDuplicate = !!existingPromotion; 
         }
 
         let newPromotion = await Promotion.create({
-            code: promotion.code,
+            code: code,
             description: promotion.description,
             quantity: promotion.quantity || 0,
             discount: promotion.discount,
@@ -129,22 +141,23 @@ const createPromotion = async (promotion) => {
             startDate: promotion.startDate,
             endDate: promotion.endDate,
             status: status.ACTIVE
-        })
+        });
 
         return {
             EC: 0,
             EM: "Tạo khuyến mãi thành công",
             DT: newPromotion
-        }
+        };
     } catch (error) {
         console.log(error);
         return {
             EC: 500,
             EM: "Tạo khuyến mãi thất bại",
             DT: "",
-        }
+        };
     }
-} 
+};
+
 
 const updatePromotion = async (promotionId, promotion) => {
     try {
