@@ -3,42 +3,31 @@ import Food from "../model/food/food.schema.js";
 import Ingredient from "../model/ingredients/ingredient.schema.js";
 import UpdateIngredient from "../model/updateIngredient/updateIngredient.schema.js";
 
-const getRevenue = async (year,quarter = null, month = null) => {
+const getRevenue = async (year, quarter = null, month = null) => {
   const startOfYear = new Date(year, 0, 1);
   const endOfYear = new Date(year, 11, 31);
   
-  // Điều kiện lọc cơ bản theo năm
   let matchConditions = { date: { $gte: startOfYear, $lte: endOfYear } };
 
-  // Thêm điều kiện lọc theo quý nếu có
   if (quarter) {
     const startMonth = (quarter - 1) * 3;
     const endMonth = startMonth + 2;
     matchConditions.date.$gte = new Date(year, startMonth, 1);
-    matchConditions.date.$lte = new Date(year, endMonth + 1, 0); // Ngày cuối của tháng kết thúc quý
+    matchConditions.date.$lte = new Date(year, endMonth + 1, 0);
   }
 
-  // Thêm điều kiện lọc theo tháng nếu có
   if (month) {
     matchConditions.date.$gte = new Date(year, month - 1, 1);
-    matchConditions.date.$lte = new Date(year, month, 0); // Ngày cuối của tháng
+    matchConditions.date.$lte = new Date(year, month, 0);
   }
 
   const revenueData = await Booking.aggregate([
     { $match: matchConditions },
-    {
-      $lookup: {
-        from: "orders",
-        localField: "order_detail",
-        foreignField: "_id",
-        as: "orderDetails"
-      }
-    },
-    { $unwind: "$orderDetails" },
+    { $unwind: "$order_detail" },
     {
       $lookup: {
         from: "foods",
-        localField: "orderDetails.food_id",
+        localField: "order_detail.food_id",
         foreignField: "_id",
         as: "foodDetails"
       }
@@ -46,32 +35,32 @@ const getRevenue = async (year,quarter = null, month = null) => {
     { $unwind: "$foodDetails" },
     {
       $group: {
-        _id: {
-          year: { $year: "$date" },
-          quarter: { $ceil: { $divide: [{ $month: "$date" }, 3] } },
-          month: { $month: "$date" }
-        },
-        totalRevenue: { $sum: { $multiply: ["$foodDetails.price", "$orderDetails.quantity"] } },
+        _id: { month: { $month: "$date" } },
+        totalRevenue: { $sum: { $multiply: ["$foodDetails.price", "$order_detail.quantity"] } },
+        totalOrders: { $sum: 1 },
         soldItems: {
           $push: {
             food_id: "$foodDetails._id",
             name: "$foodDetails.name",
             image: "$foodDetails.image",
             price: "$foodDetails.price",
-            quantitySold: "$orderDetails.quantity"
+            quantitySold: "$order_detail.quantity"
           }
         }
       }
     },
     {
-      $group: {
-        _id: month ? "$_id.month" : quarter ? "$_id.quarter" : "$_id.year",
-        totalRevenue: { $sum: "$totalRevenue" },
-        details: { $push: "$$ROOT" }
+      $project: {
+        _id: 1,
+        totalRevenue: 1,
+        totalOrders: 1,
+        soldItems: 1
       }
+    },
+    {
+      $sort: { "_id.month": 1 }
     }
   ]);
-
   return revenueData;
 };
 
