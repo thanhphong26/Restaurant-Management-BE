@@ -389,7 +389,6 @@ const getStatistics=async(startDate,endDate)=>{
 }
 const checkExpiredIngredients=async(page=1, limit=10)=>{
     try{
-        console.log('test')
         const skip = (page - 1) * limit;
 
         // Lấy dữ liệu từ cơ sở dữ liệu với phân trang

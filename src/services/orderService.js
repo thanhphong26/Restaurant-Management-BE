@@ -48,7 +48,7 @@ const updateOrder = async (bookingId, orderDetails) => {
         console.log(error);
         return {
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: "",
         }
     }
@@ -103,7 +103,7 @@ const getOrderById = async (id) => {
         console.log(error);
         return {
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: "",
         }
     }

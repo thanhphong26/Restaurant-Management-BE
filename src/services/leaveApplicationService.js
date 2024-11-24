@@ -56,7 +56,7 @@ const createLeaveApplication = async (leaveApplication) => {
         console.log(error);
         return {
             EC: 500,
-            EM: 'Error from server',
+            EM: 'Lỗi hệ thống',
             DT: ''
         };
     }
@@ -72,7 +72,7 @@ const updateStatusLeaveApplication = async (leaveApplicationId, status) => {
             };
         }
         return {
-            EC: 200,
+            EC: 0,
             EM: 'Cập nhật trạng thái đơn xin nghỉ thành công',
             DT: leaveApplication
         };
@@ -80,7 +80,7 @@ const updateStatusLeaveApplication = async (leaveApplicationId, status) => {
         console.log(error);
         return {
             EC: 500,
-            EM: 'Error from server',
+            EM: 'Lỗi hệ thống',
             DT: ''
         };
     }
@@ -137,7 +137,7 @@ const checkIn = async (staffId) => {
         console.log(error);
         return {
             EC: 500,
-            EM: 'Error from server',
+            EM: 'Lỗi hệ thống',
             DT: ''
         };
     }
@@ -193,7 +193,7 @@ const checkOut = async (staffId) => {
         console.log(error);
         return {
             EC: 500,
-            EM: 'Error from server',
+            EM: 'Lỗi hệ thống',
             DT: ''
         };
     }
@@ -230,7 +230,7 @@ const getTimeKeepingInMonth = async (staffId, month, year) => {
         console.log(error);
         return {
             EC: 500,
-            EM: 'Error from server',
+            EM: 'Lỗi hệ thống',
             DT: ''
         };
     }
@@ -257,7 +257,157 @@ const getListLeaveApplication = async (staffId, status, start_date, end_date) =>
         console.log(error);
         return {
             EC: 500,
-            EM: 'Error from server',
+            EM: 'Lỗi hệ thống',
+            DT: ''
+        };
+    }
+};
+const getListApplicationByDate = async (date, status, page = 1, limit = 10) => {
+    try {
+        let searchDate;
+        
+        // Xử lý và validate date input
+        if (date) {
+            // Kiểm tra format date có đúng không
+            const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+            if (!dateRegex.test(date)) {
+                return {
+                    EC: 400,
+                    EM: 'Định dạng ngày không hợp lệ. Vui lòng sử dụng định dạng dd/MM/yyyy',
+                    DT: ''
+                };
+            }
+            
+            // Parse date với Luxon
+            searchDate = DateTime.fromFormat(date, 'dd/MM/yyyy', { zone: 'Asia/Ho_Chi_Minh' });
+            
+            // Kiểm tra date có hợp lệ không
+            if (!searchDate.isValid) {
+                return {
+                    EC: 400,
+                    EM: 'Ngày không hợp lệ: ' + searchDate.invalidReason,
+                    DT: ''
+                };
+            }
+        } else {
+            searchDate = DateTime.now().setZone('Asia/Ho_Chi_Minh');
+        }
+
+        const startOfDay = searchDate.startOf('day').toJSDate();
+
+        const conditions = {
+            start_date: {
+                $gte: startOfDay
+            }
+        };
+
+        if (status) {
+            const validStatuses = ['pending', 'approved', 'rejected'];
+            if (!validStatuses.includes(status)) {
+                return {
+                    EC: 400,
+                    EM: 'Status không hợp lệ',
+                    DT: ''
+                };
+            }
+            conditions.status = status;
+        }
+
+        if (page < 1 || !Number.isInteger(Number(page))) {
+            return {
+                EC: 400,
+                EM: 'Số trang không hợp lệ',
+                DT: ''
+            };
+        }
+
+        if (limit < 1 || !Number.isInteger(Number(limit))) {
+            return {
+                EC: 400,
+                EM: 'Limit không hợp lệ',
+                DT: ''
+            };
+        }
+
+        const skip = (page - 1) * limit;
+
+        const [leaveApplications, totalDocuments, statusCounts] = await Promise.all([
+            LeaveApplication.find(conditions)
+                .populate({
+                    path: 'staff_id',
+                    match: { user_id: { $exists: true } },
+                    select: 'user_id position salary type point status',
+                    populate: {
+                        path: 'user_id',
+                        select: 'username last_name first_name  address phone_number dob'
+                    }
+                })
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit),
+            LeaveApplication.countDocuments(conditions),
+            LeaveApplication.aggregate([
+                { $match: conditions },
+                {
+                    $group: {
+                        _id: "$status",
+                        count: { $sum: 1 }
+                    }
+                }
+            ])
+        ]);
+
+        const formattedLeaveApplications = leaveApplications.map(app => {
+            const staffData = app.staff_id;
+            const userData = staffData.user_id;
+            
+            return {
+                ...app.toObject(),
+                staff_info: {
+                    position: staffData.position,
+                    type: staffData.type,
+                    status: staffData.status,
+                    user_info: {
+                        username: userData.username,
+                        full_name: `${userData.first_name} ${userData.last_name}`,
+                        address: userData.address,
+                        phone_number: userData.phone_number,
+                        dob: userData.dob
+                    }
+                }
+            };
+        });
+
+        // Tính toán thông tin phân trang
+        const totalPages = Math.ceil(totalDocuments / limit);
+
+        // Format kết quả trả về
+        return {
+            EC: 0,
+            EM: 'Lấy danh sách đơn xin nghỉ thành công',
+            DT: {
+                data: formattedLeaveApplications,
+                pagination: {
+                    currentPage: Number(page),
+                    totalPages,
+                    totalDocuments,
+                    limit: Number(limit)
+                },
+                statistics: {
+                    total: totalDocuments,
+                    byStatus: statusCounts.reduce((acc, curr) => {
+                        acc[curr._id] = curr.count;
+                        return acc;
+                    }, {})
+                },
+                searchDate: searchDate.toFormat('dd/MM/yyyy')
+            }
+        };
+    } catch (error) {
+        console.error('Error in getListApplicationByDate:', error);
+        return {
+            EC: 500,
+            EM: 'Lỗi hệ thống',
             DT: ''
         };
     }
@@ -268,6 +418,7 @@ export default {
     checkIn,
     checkOut,
     getTimeKeepingInMonth,
-    getListLeaveApplication
+    getListLeaveApplication, 
+    getListApplicationByDate
     // checkStaffInShiftIsPresent
 };

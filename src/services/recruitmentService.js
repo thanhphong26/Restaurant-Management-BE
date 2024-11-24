@@ -110,7 +110,7 @@ const getRecruimentById = async (recruimentId) => {
         console.log(error);
         return {
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: "",
         };
     }
@@ -138,7 +138,7 @@ const createRecruiment = async (recruiment) => {
         console.log(error);
         return {
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: ""
         }
     }
@@ -166,7 +166,7 @@ const updateRecruiment = async (recruimentId, recruiment) => {
         console.log(error);
         return {
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: ""
         }
     }
@@ -186,7 +186,7 @@ const deleteRecruiment = async (recruimentId) => {
         console.log(error);
         return {
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: ""
         }
     }

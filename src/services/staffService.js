@@ -168,7 +168,7 @@ const getStaffById = async (staffId) => {
         console.log(error);
         return {
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: "",
         }
     }
@@ -231,7 +231,7 @@ const getStaffByUserId = async (userId) => {
         console.log(error);
         return {
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: "",
         }
     }
@@ -256,7 +256,7 @@ const createStaff = async (staff) => {
         console.log(error);
         return {
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: ""
         }
     }
@@ -279,7 +279,7 @@ const updateStaff = async (staffId, staff) => {
         console.log(error);
         return {
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: ""
         }
     }
@@ -299,7 +299,7 @@ const deleteStaff = async (staffId) => {
         console.log(error);
         return {
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: ""
         }
     }
@@ -392,7 +392,7 @@ const getTimeKeepingInMonthByStaffId = async (staffId1, month1, year1) => {
         console.log(error);
         return {
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: ""
         };
     }
