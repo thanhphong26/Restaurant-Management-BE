@@ -81,6 +81,12 @@ const bookingSchema = new mongoose.Schema({
     type: Number,
     default: null
   },
+  deposit: {
+    type: Number,
+    required: true,
+    min: 0,
+    default: 0
+  },
   status: {
     type: String,
     enum: ['pending', 'confirmed', 'canceled', 'completed'],

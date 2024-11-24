@@ -22,6 +22,7 @@ import cookieParser from 'cookie-parser';
 import initPaymentRoute from './router/paymentRoute.js';
 import { errorHandler } from './middleware/JWTAction.js';
 import initOderRoute from './router/OrderRoute.js';
+import initDepositRoute from './router/depositRoute.js';
 dotenv.config();
 
 const app = express();
@@ -52,6 +53,7 @@ initReportRoute(app);
 initPaymentRoute(app);
 initUpdateIngredientRoute(app);
 initOderRoute(app);
+initDepositRoute(app);
 app.use(errorHandler);
 
 app.listen(port, () => {

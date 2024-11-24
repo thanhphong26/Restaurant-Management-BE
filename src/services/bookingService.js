@@ -108,9 +108,8 @@ const getAllBookings = async (page = 1, limit = 10, sortBy = 'date', sortOrder =
         }
     }
 }
-const createBooking = async (user_id, table, booking) => { //completed
+const createBooking = async (user_id, table, booking, depositCost) => { //completed
     try {
-        // lấy bàn trống đầu tiên
         let resTable = {};
         resTable = await Table.findOne({ status: "available", ...table });
         if (!resTable) {
@@ -131,7 +130,7 @@ const createBooking = async (user_id, table, booking) => { //completed
             } else {
                 let updatedTable = await tableService.updateTable(resTable._id, { status: "reserved" });
                 if (updatedTable.EC === 0) {
-                    let newBooking = await Booking.create({ ...booking, user_id, table_id: updatedTable.DT._id });
+                    let newBooking = await Booking.create({ ...booking, user_id, deposit: depositCost, table_id: updatedTable.DT._id });
                     console.log("newBooking:", newBooking);
                     return {
                         EC: 0,
