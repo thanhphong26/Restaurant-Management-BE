@@ -15,14 +15,13 @@ const promotionSchema = new mongoose.Schema({
         type: Number,
         required: true,
         min: 0,
-        max: 100,
     },
     condition: Number || 0,
     type: {
         type: String,
         enum: ['percentage', 'fixed'],
         required: true,
-    }, 
+    },
     startDate: {
         type: Date,
         required: true,

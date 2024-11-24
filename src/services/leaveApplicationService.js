@@ -23,7 +23,7 @@ const createLeaveApplication = async (leaveApplication) => {
         if (new Date(sanitizedData.start_date) > new Date(sanitizedData.end_date) || new Date(sanitizedData.start_date) < new Date()) {
             return {
                 EC: 1,
-                EM: 'Ngày ngghỉ và ngày làm việc lại không hợp lí',
+                EM: 'Ngày nghỉ và ngày làm việc lại không hợp lí',
                 DT: ''
             };
         }
@@ -48,7 +48,7 @@ const createLeaveApplication = async (leaveApplication) => {
         const newLeaveApplication = new LeaveApplication(sanitizedData);
         await newLeaveApplication.save();
         return {
-            EC: 200,
+            EC: 0,
             EM: 'Tạo đơn xin nghỉ thành công',
             DT: newLeaveApplication
         };
@@ -72,7 +72,7 @@ const updateStatusLeaveApplication = async (leaveApplicationId, status) => {
             };
         }
         return {
-            EC: 200,
+            EC: 0,
             EM: 'Cập nhật trạng thái đơn xin nghỉ thành công',
             DT: leaveApplication
         };
@@ -89,12 +89,11 @@ const updateStatusLeaveApplication = async (leaveApplicationId, status) => {
 const checkIn = async (staffId) => {
     try {
         const today = DateTime.now().setZone(zone);
-        console.log('Start today: ', today.startOf('day'), staffId);
+        // console.log('Start today: ', today.startOf('day'), staffId);
         let shift = await Shift.findOne({
             date: today.startOf('day'),
             list_staff: staffId,
         })
-        // console.log('shift: ', shift);
         if (!shift) {
             return {
                 EC: 1,
@@ -222,7 +221,7 @@ const getTimeKeepingInMonth = async (staffId, month, year) => {
             earlyLeave: timeKeepingList.filter(a => a.status === 'early_leave').length
         };
         return {
-            EC: 200,
+            EC: 0,
             EM: 'Lấy danh sách chấm công thành công',
             DT: timeKeepingList, statistics
         };
@@ -249,7 +248,7 @@ const getListLeaveApplication = async (staffId, status, start_date, end_date) =>
         }
         const leaveApplicationList = await LeaveApplication.find(filter).sort({ start_date: 1 });
         return {
-            EC: 200,
+            EC: 0,
             EM: 'Lấy danh sách đơn xin nghỉ thành công',
             DT: leaveApplicationList
         };

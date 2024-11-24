@@ -3,7 +3,6 @@ import Booking from "../model/booking/booking.schema.js";
 
 const updateOrder = async (bookingId, orderDetails) => {
     try {
-        console.log("orderDetails", orderDetails);
         // Tìm booking bằng ID
         const booking = await Booking.findById(bookingId);
 
@@ -28,11 +27,8 @@ const updateOrder = async (bookingId, orderDetails) => {
                     });
                 }
             }
-            console.log('Before updating Booking:', booking);
             // Lưu lại thay đổi
             const updatedBooking = await booking.save();
-
-            console.log('After updated Booking:', updatedBooking);
             return {
                 EC: 0,
                 EM: "Cập nhật order thành công",

@@ -13,7 +13,7 @@ const orderSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'preparing', 'ready', 'served', 'cancelled'],
+    enum: ['pending', 'preparing', 'ready', 'served', 'canceled'],
     default: 'pending'
   }
 });
@@ -48,6 +48,12 @@ const bookingSchema = new mongoose.Schema({
     min: 0,
     default: 0
   },
+  deposit: {
+    type: Number,
+    required: true,
+    min: 0,
+    default: 0
+  },
   voucher: {
     type: String,
     default: ''
@@ -77,8 +83,8 @@ const bookingSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['confirmed', 'cancelled', 'completed'],
-    default: 'confirmed'
+    enum: ['pending', 'confirmed', 'canceled', 'completed'],
+    default: 'pending'
   }
 });
 const Booking = mongoose.model("Booking", bookingSchema);

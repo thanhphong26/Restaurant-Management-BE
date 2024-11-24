@@ -4,11 +4,15 @@ import orderService from "../services/orderService.js";
 const getAllBookings = async (req, res) => {
     try {
 
-        const { page, limit, sortBy, sortOrder, status } = req.query;
-        //lấy id từ query của req
+        const { page, limit, sortBy, sortOrder, statusPayment, statusOrder } = req.query;
+        //lấy id từ query của reqreq.user.id
         const role = req.user.role;
         if (role === 'customer') {
-            let response = await bookingService.getAllBookingByUserId(req.user.id, page, limit, sortBy, sortOrder, status);
+            const date = req.query.date || '';
+            const userpage = req.query.page || 1;
+            const userlimit = req.query.limit || 10;
+            const userstatus = req.query.userstatus || '';
+            let response = await bookingService.getBookingByUserId(userpage, +userlimit, userstatus, date, req.user.id);
             return res.status(200).json({
                 EC: response.EC,
                 EM: response.EM,
@@ -16,7 +20,7 @@ const getAllBookings = async (req, res) => {
             });
         }
         else {
-            let response = await bookingService.getAllBookings(page, limit, sortBy, sortOrder, status);
+            let response = await bookingService.getAllBookings(page, limit, sortBy, sortOrder, statusPayment, statusOrder);
             return res.status(200).json({
                 EC: response.EC,
                 EM: response.EM,
@@ -126,7 +130,6 @@ const getOrderDetailByBookingId = async (req, res) => {
 }
 const getAllBookingsByPhoneNumber = async (req, res) => {
     try {
-        console.log(req.query.phone_number);
         let response = await bookingService.getAllBookingsByPhoneNumber(req.query.phone_number, req.query.page, req.query.limit);
         return res.status(200).json({
             EC: response.EC,
@@ -210,6 +213,27 @@ const getOrderById = async (req, res) => {
         });
     }
 }
+const getBookingByUserId = async (req, res) => {
+    try {
+        const page = req.query.page || 1;
+        const limit = req.query.limit || 10;
+        const date = req.query.date || '';
+        console.log('đây là id: ', req.user.id);
+        let response = await bookingService.getBookingByUserId(page, limit, date, req.user.id);
+        return res.status(200).json({
+            EC: response.EC,
+            EM: response.EM,
+            DT: response.DT
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            EC: 500,
+            EM: "Error from server",
+            DT: "",
+        });
+    }
+}
 export default {
     getAllBookings,
     createBooking,
@@ -221,5 +245,6 @@ export default {
     payment,
     serveBooking,
     updateOrder,
-    getOrderById
+    getOrderById,
+    getBookingByUserId
 }

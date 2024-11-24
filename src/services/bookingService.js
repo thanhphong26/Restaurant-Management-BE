@@ -3,25 +3,100 @@ import Table from "../model/table/table.schema.js";
 import User from "../model/user/user.schema.js";
 import tableService from "./tableService.js";
 import orderService from "./orderService.js";
-import { status } from "../utils/index.js";
+import { status, zone } from "../utils/index.js";
 import Promotion from "../model/promotions/promotion.schema.js";
+import { DateTime } from "luxon";
 import mongoose from "mongoose";
-const getAllBookings = async (page, limit, sortBy = 'date', sortOrder = 'asc', status) => {
-    // const pipeline = [
-    //     {
-    //         $
-    //     }
-    // ];
-    const query = {};
-    if (status) {
-        query.status = status;
+const getAllBookings = async (page = 1, limit = 10, sortBy = 'date', sortOrder = 'asc', statusPayment = null, statusOrder = null) => {
+    let match = { $match: {} };
+
+    if (statusPayment) {
+        match.$match.payment_status = statusPayment;
     }
+
+    if (statusOrder) {
+        match.$match.status = statusOrder;
+    }
+    const pipelineMain = [match,
+        {
+            $lookup: {
+                from: "users",
+                localField: "user_id",
+                foreignField: "_id",
+                as: "user"
+            }
+        },
+        {
+            $unwind: "$user"
+        },
+        {
+            $lookup: {
+                from: "tables", // Tên collection lưu thông tin bàn
+                localField: "table_id", // Trường trong bookingSchema
+                foreignField: "_id", // Trường trong tables collection
+                as: "table_info" // Tên field mới để chứa kết quả join
+            }
+        },
+        {
+            $project: {
+                user: {
+                    _id: "$user._id",
+                    first_name: "$user.first_name",
+                    last_name: "$user.last_name",
+                    email: "$user.email",
+                    phone_number: "$user.phone_number",
+                },
+                booking: {
+                    _id: "$_id",
+                    date: "$date",
+                    time: "$time",
+                    deposit: "$deposit",
+                    total: "$total",
+                    note: "$note",
+                    payment_status: "$payment_status",
+                    status: "$status",
+                    table: {
+                        name: { $arrayElemAt: ["$table_info.name", 0] },
+                        type: { $arrayElemAt: ["$table_info.type", 0] }
+                    },
+                    order_detail: {
+                        $map: {
+                            input: "$order_detail",
+                            as: "order",
+                            in: {
+                                food_id: "$$order.food_id",
+                                quantity: "$$order.quantity",
+                                status: "$$order.status"
+                            }
+                        }
+                    },
+
+                }
+            }
+        },
+
+        {
+            $sort: {
+                ["date"]: -1,
+                ["time"]: 1
+            }
+        }]
+    const pipeline = [
+        ...pipelineMain,
+        {
+            $skip: (page - 1) * limit
+        },
+        {
+            $limit: +limit
+        }
+    ];
     try {
-        let bookings = await Booking.find(query).sort({ [sortBy]: sortOrder }).skip((page - 1) * limit).limit(limit);
+        let infor = await Booking.aggregate(pipeline);
+        let booking = await Booking.aggregate([...pipelineMain, { $count: "total" }]);
         return {
             EC: 0,
             EM: "Lấy thông tin booking thành công",
-            DT: bookings
+            DT: { infor, total: booking[0]?.total || 0 }
         }
     } catch (error) {
         console.log(error);
@@ -46,7 +121,6 @@ const createBooking = async (user_id, table, booking) => { //completed
                     seat: { $gte: table.seat },
                     _id: { $nin: tableBooked.map(item => item.table_id) }
                 });
-            console.log("resTable:", resTable);
             if (!resTable) {
                 return {
                     EC: 1,
@@ -287,78 +361,92 @@ const getOrderDetailByBookingId = async (id) => {
         }
     }
 }
-const getAllBookingsByPhoneNumber = async (phone_number, page = 1, limit = 10) => {
+const getAllBookingsByPhoneNumber = async (phone_number = null, page = 1, limit = 10,) => {
     try {
-        const pipelineMain = [{
-            $match: {
-                phone_number: phone_number,
-            }
-        },
-        {
-            $lookup: {
-                from: "bookings",
-                localField: "_id",
-                foreignField: "user_id",
-                as: "booking"
-            }
-        },
-        {
-            $unwind: "$booking"
-        },
-        {
-            $match: {
-                "booking.payment_status": "pending"
-            }
-        },
-        {
-            $lookup: {
-                from: "tables", // Tên collection lưu thông tin bàn
-                localField: "booking.table_id", // Trường trong bookingSchema
-                foreignField: "_id", // Trường trong tables collection
-                as: "table_info" // Tên field mới để chứa kết quả join
-            }
-        },
-        {
-            $project: {
-                _id: 1,
-                first_name: 1,
-                last_name: 1,
-                email: 1,
-                phone_number: 1,
-                avatar: 1,
-                address: 1,
-                dob: 1,
-
-                booking: {
-                    _id: "$booking._id",
-                    date: "$booking.date",
-                    time: "$booking.time",
-                    table: {
-                        name: { $arrayElemAt: ["$table_info.name", 0] },
-                        type: { $arrayElemAt: ["$table_info.type", 0] }
-                    },
-                    order_detail: {
-                        $map: {
-                            input: "$order_detail",
-                            as: "order",
-                            in: {
-                                food_id: "$$order.food_id",
-                                quantity: "$$order.quantity",
-                                status: "$$order.status"
-                            }
-                        }
-                    },
-                    note: "$booking.note",
-                    payment_status: "$booking.payment_status",
-                    status: "$booking.status"
+        let match = {}
+        let matchBooKing = {}
+        const todayWithSpecificTime = DateTime.now()
+            .setZone(zone) // Đặt múi giờ UTC
+            .startOf("day"); // Đặt thời gian cụ thể
+        // console.log(todayWithSpecificTime);
+        if (phone_number) {
+            match = { $match: { phone_number: phone_number } }
+            matchBooKing = { "booking.date": { $gte: todayWithSpecificTime } };
+        } else {
+            match = { $match: {} }
+            matchBooKing = { "booking.date": todayWithSpecificTime };
+        }
+        const pipelineMain = [match,
+            {
+                $lookup: {
+                    from: "bookings",
+                    localField: "_id",
+                    foreignField: "user_id",
+                    as: "booking"
                 }
-            }
-        },
-        {
-            $sort: {
-                ["booking.date"]: -1
-            }
-        }]
+            },
+            {
+                $unwind: "$booking"
+            },
+            {
+                $match: {
+                    "booking.payment_status": "pending",
+                    "booking.status": "confirmed",
+                    ...matchBooKing
+                }
+            },
+            {
+                $lookup: {
+                    from: "tables", // Tên collection lưu thông tin bàn
+                    localField: "booking.table_id", // Trường trong bookingSchema
+                    foreignField: "_id", // Trường trong tables collection
+                    as: "table_info" // Tên field mới để chứa kết quả join
+                }
+            },
+            {
+                $project: {
+                    _id: 1,
+                    first_name: 1,
+                    last_name: 1,
+                    email: 1,
+                    phone_number: 1,
+                    avatar: 1,
+                    address: 1,
+                    dob: 1,
+
+                    booking: {
+                        _id: "$booking._id",
+                        date: "$booking.date",
+                        time: "$booking.time",
+                        deposit: "$booking.deposit",
+                        total: "$booking.total",
+                        table: {
+                            name: { $arrayElemAt: ["$table_info.name", 0] },
+                            type: { $arrayElemAt: ["$table_info.type", 0] }
+                        },
+                        order_detail: {
+                            $map: {
+                                input: "$order_detail",
+                                as: "order",
+                                in: {
+                                    food_id: "$$order.food_id",
+                                    quantity: "$$order.quantity",
+                                    status: "$$order.status"
+                                }
+                            }
+                        },
+                        note: "$booking.note",
+                        payment_status: "$booking.payment_status",
+                        status: "$booking.status"
+                    }
+                }
+            },
+            {
+                $sort: {
+                    ["booking.date"]: -1,
+                    ["booking.time"]: 1
+                }
+            }]
         const pipeline = [
             ...pipelineMain,
             {
@@ -369,7 +457,7 @@ const getAllBookingsByPhoneNumber = async (phone_number, page = 1, limit = 10) =
             }
         ];
         let infor = await User.aggregate(pipeline);
-        if (infor.length === 0) {
+        if (phone_number && infor.length === 0) {
             return {
                 EC: 1,
                 EM: "Không tìm thấy thông tin đặt trước của số điện thoại này",
@@ -380,8 +468,7 @@ const getAllBookingsByPhoneNumber = async (phone_number, page = 1, limit = 10) =
         return {
             EC: 0,
             EM: "Lấy danh sách đặt trước thành công",
-            DT: { infor, total: booking[0].total }
-            // DT: ""
+            DT: { infor, total: booking[0]?.total || 0 }
         }
     }
     catch (error) {
@@ -485,6 +572,166 @@ const serveBooking = async (id, list_staff) => {
     }
 }
 
+const getBookingByUserId = async (page, limit, status, date, user_id) => {
+    try {
+        // Tạo matchStage cơ bản với user_id
+        const matchStage = {
+            user_id: new mongoose.Types.ObjectId(user_id),
+        };
+
+        // Thêm điều kiện status nếu được cung cấp
+        if (status) {
+            matchStage.status = status;
+        }
+
+        // Thêm điều kiện date nếu được cung cấp
+        if (date) {
+            const startOfDay = new Date(date);
+            startOfDay.setHours(0, 0, 0, 0);
+            const endOfDay = new Date(date);
+            endOfDay.setHours(23, 59, 59, 999);
+
+            matchStage.date = {
+                $gte: startOfDay,
+                $lte: endOfDay
+            };
+        }
+
+        const pipeline = [
+            { $match: matchStage },
+            { $sort: { date: -1 } },
+            {
+                $lookup: {
+                    from: 'tables',
+                    localField: 'table_id',
+                    foreignField: '_id',
+                    as: 'table'
+                }
+            },
+            {
+                $unwind: '$table'
+            },
+            {
+                $lookup: {
+                    from: 'foods',
+                    let: { orderDetails: '$order_detail' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $in: ['$_id', {
+                                        $map: {
+                                            input: '$$orderDetails',
+                                            as: 'order',
+                                            in: '$$order.food_id'
+                                        }
+                                    }]
+                                }
+                            }
+                        }
+                    ],
+                    as: 'foods'
+                }
+            },
+            {
+                $addFields: {
+                    order_detail: {
+                        $map: {
+                            input: '$order_detail',
+                            as: 'order',
+                            in: {
+                                food: {
+                                    $arrayElemAt: [
+                                        {
+                                            $filter: {
+                                                input: '$foods',
+                                                as: 'food',
+                                                cond: { $eq: ['$$food._id', '$$order.food_id'] }
+                                            }
+                                        },
+                                        0
+                                    ]
+                                },
+                                quantity: '$$order.quantity',
+                                status: '$$order.status'
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                $project: {
+                    _id: 1,
+                    date: 1,
+                    time: 1,
+                    table: {
+                        name: '$table.name',
+                        type: '$table.type'
+                    },
+                    order_detail: {
+                        $map: {
+                            input: '$order_detail',
+                            as: 'item',
+                            in: {
+                                food_id: '$$item.food._id',
+                                name: '$$item.food.name',
+                                price: '$$item.food.price',
+                                image: '$$item.food.image',
+                                quantity: '$$item.quantity',
+                                status: '$$item.status'
+                            }
+                        }
+                    },
+                    note: 1,
+                    total: 1,
+                    voucher: 1,
+                    payment_method: 1,
+                    payment_status: 1,
+                    list_staff: 1,
+                    comment: 1,
+                    rate: 1,
+                    status: 1
+                }
+            },
+            {
+                $facet: {
+                    metadata: [
+                        { $count: "total" },
+                        { $addFields: { page: page, limit: +limit } },
+                    ],
+                    data: [
+                        { $skip: (page - 1) * +limit },
+                        { $limit: +limit },
+                    ],
+                },
+            },
+        ];
+
+        const result = await Booking.aggregate(pipeline);
+
+        // Trích xuất dữ liệu kết quả
+        const bookings = result[0]?.data || [];
+        const metadata = result[0]?.metadata[0] || { total: 0, page, limit };
+
+        return {
+            EC: 0,
+            EM: "Lấy thông tin booking thành công",
+            DT: {
+                metadata,
+                bookings,
+            },
+        };
+    } catch (error) {
+        console.error(error);
+        return {
+            EC: 500,
+            EM: "Error from server",
+            DT: "",
+        };
+    }
+};
+
+
 export default {
     getAllBookings,
     getAllBookingByUserId,
@@ -497,4 +744,5 @@ export default {
     getAllBookingsByPhoneNumber,
     payment,
     serveBooking,
+    getBookingByUserId,
 }
