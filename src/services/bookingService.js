@@ -7,22 +7,97 @@ import { status, zone } from "../utils/index.js";
 import Promotion from "../model/promotions/promotion.schema.js";
 import { DateTime } from "luxon";
 import mongoose from "mongoose";
-const getAllBookings = async (page, limit, sortBy = 'date', sortOrder = 'asc', status) => {
-    // const pipeline = [
-    //     {
-    //         $
-    //     }
-    // ];
-    const query = {};
+const getAllBookings = async (page = 1, limit = 10, sortBy = 'date', sortOrder = 'asc', status = null) => {
+    let match = {}
     if (status) {
-        query.status = status;
+        match = {
+            $match: { payment_status: status }
+        }
+    } else {
+        match = {
+            $match: {}
+        }
     }
+    const pipelineMain = [match,
+        {
+            $lookup: {
+                from: "users",
+                localField: "user_id",
+                foreignField: "_id",
+                as: "user"
+            }
+        },
+        {
+            $unwind: "$user"
+        },
+        {
+            $lookup: {
+                from: "tables", // Tên collection lưu thông tin bàn
+                localField: "table_id", // Trường trong bookingSchema
+                foreignField: "_id", // Trường trong tables collection
+                as: "table_info" // Tên field mới để chứa kết quả join
+            }
+        },
+        {
+            $project: {
+                user: {
+                    _id: "$user._id",
+                    first_name: "$user.first_name",
+                    last_name: "$user.last_name",
+                    email: "$user.email",
+                    phone_number: "$user.phone_number",
+                },
+                booking: {
+                    _id: "$_id",
+                    date: "$date",
+                    time: "$time",
+                    deposit: "$deposit",
+                    total: "$total",
+                    note: "$note",
+                    payment_status: "$payment_status",
+                    status: "$status",
+                    table: {
+                        name: { $arrayElemAt: ["$table_info.name", 0] },
+                        type: { $arrayElemAt: ["$table_info.type", 0] }
+                    },
+                    order_detail: {
+                        $map: {
+                            input: "$order_detail",
+                            as: "order",
+                            in: {
+                                food_id: "$$order.food_id",
+                                quantity: "$$order.quantity",
+                                status: "$$order.status"
+                            }
+                        }
+                    },
+
+                }
+            }
+        },
+
+        {
+            $sort: {
+                ["date"]: -1,
+                ["time"]: 1
+            }
+        }]
+    const pipeline = [
+        ...pipelineMain,
+        {
+            $skip: (page - 1) * limit
+        },
+        {
+            $limit: +limit
+        }
+    ];
     try {
-        let bookings = await Booking.find(query).sort({ [sortBy]: sortOrder }).skip((page - 1) * limit).limit(limit);
+        let infor = await Booking.aggregate(pipeline);
+        let booking = await Booking.aggregate([...pipelineMain, { $count: "total" }]);
         return {
             EC: 0,
             EM: "Lấy thông tin booking thành công",
-            DT: bookings
+            DT: { infor, total: booking[0]?.total || 0 }
         }
     } catch (error) {
         console.log(error);
@@ -287,7 +362,7 @@ const getOrderDetailByBookingId = async (id) => {
         }
     }
 }
-const getAllBookingsByPhoneNumber = async (phone_number = null, page = 1, limit = 10) => {
+const getAllBookingsByPhoneNumber = async (phone_number = null, page = 1, limit = 10,) => {
     try {
         let match = {}
         let matchBooKing = {}
@@ -317,6 +392,7 @@ const getAllBookingsByPhoneNumber = async (phone_number = null, page = 1, limit 
             {
                 $match: {
                     "booking.payment_status": "pending",
+                    "booking.status": "confirmed",
                     ...matchBooKing
                 }
             },
@@ -343,6 +419,8 @@ const getAllBookingsByPhoneNumber = async (phone_number = null, page = 1, limit 
                         _id: "$booking._id",
                         date: "$booking.date",
                         time: "$booking.time",
+                        deposit: "$booking.deposit",
+                        total: "$booking.total",
                         table: {
                             name: { $arrayElemAt: ["$table_info.name", 0] },
                             type: { $arrayElemAt: ["$table_info.type", 0] }

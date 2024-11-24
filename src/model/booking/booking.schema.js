@@ -13,7 +13,7 @@ const orderSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'preparing', 'ready', 'served', 'cancelled'],
+    enum: ['pending', 'preparing', 'ready', 'served', 'canceled'],
     default: 'pending'
   }
 });
@@ -43,6 +43,12 @@ const bookingSchema = new mongoose.Schema({
     default: ''
   },
   total: {
+    type: Number,
+    required: true,
+    min: 0,
+    default: 0
+  },
+  deposit: {
     type: Number,
     required: true,
     min: 0,
