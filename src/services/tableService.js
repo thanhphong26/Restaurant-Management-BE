@@ -13,7 +13,7 @@ const createTable = async (table) => {
         console.log(error);
         return {
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: "",
         }
     }
@@ -30,7 +30,7 @@ const updateTable = async (id, table) => {
         console.log(error);
         return {
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: "",
         }
     }
@@ -47,7 +47,7 @@ const deleteTable = async (id) => {
         console.log(error);
         return {
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: "",
         }
     }
@@ -64,7 +64,7 @@ const getAllTable = async () => {
         console.log(error);
         return {
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: "",
         }
     }
@@ -81,7 +81,7 @@ const getOneTable = async (id) => {
         console.log(error);
         return {
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: "",
         }
     }

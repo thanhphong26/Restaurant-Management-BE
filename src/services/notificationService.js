@@ -13,7 +13,7 @@ const createNotification = async (notification) => {
         console.log(error);
         return {
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: ""
         };
     }

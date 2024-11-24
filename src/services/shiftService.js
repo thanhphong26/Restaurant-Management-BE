@@ -189,7 +189,7 @@ const getShiftsByStaffId = async (staffId) => {
         console.log(error);
         return {
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: "",
         };
     }
@@ -235,7 +235,7 @@ const createShift = async (shift) => {
         console.log(error);
         return {
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: ""
         }
     }
@@ -269,7 +269,7 @@ const updateShift = async (shiftId, shift) => {
         console.log(error);
         return {
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: ""
         }
     }
@@ -287,7 +287,7 @@ const deleteShift = async (shiftId) => {
         console.log(error);
         return {
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: ""
         }
     }
