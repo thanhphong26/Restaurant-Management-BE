@@ -7,16 +7,15 @@ import { status, zone } from "../utils/index.js";
 import Promotion from "../model/promotions/promotion.schema.js";
 import { DateTime } from "luxon";
 import mongoose from "mongoose";
-const getAllBookings = async (page = 1, limit = 10, sortBy = 'date', sortOrder = 'asc', status = null) => {
-    let match = {}
-    if (status) {
-        match = {
-            $match: { payment_status: status }
-        }
-    } else {
-        match = {
-            $match: {}
-        }
+const getAllBookings = async (page = 1, limit = 10, sortBy = 'date', sortOrder = 'asc', statusPayment = null, statusOrder = null) => {
+    let match = { $match: {} };
+
+    if (statusPayment) {
+        match.$match.payment_status = statusPayment;
+    }
+
+    if (statusOrder) {
+        match.$match.status = statusOrder;
     }
     const pipelineMain = [match,
         {
@@ -592,9 +591,9 @@ const getBookingByUserId = async (page, limit, status, date, user_id) => {
             const endOfDay = new Date(date);
             endOfDay.setHours(23, 59, 59, 999);
 
-            matchStage.date = { 
-                $gte: startOfDay, 
-                $lte: endOfDay 
+            matchStage.date = {
+                $gte: startOfDay,
+                $lte: endOfDay
             };
         }
 

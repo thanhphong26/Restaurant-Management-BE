@@ -44,7 +44,7 @@ const getPromotionById = async (req, res) => {
 const createPromotion = async (req, res) => {
     try {
         let promotion = req.body;
-        if (promotion && promotion.description && promotion.type
+        if (promotion && promotion.type
             && promotion.discount && promotion.startDate && promotion.endDate) {
             let response = await promotionService.createPromotion(promotion);
             return res.status(200).json({

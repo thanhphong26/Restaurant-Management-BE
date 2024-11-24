@@ -4,7 +4,7 @@ import orderService from "../services/orderService.js";
 const getAllBookings = async (req, res) => {
     try {
 
-        const { page, limit, sortBy, sortOrder, status } = req.query;
+        const { page, limit, sortBy, sortOrder, statusPayment, statusOrder } = req.query;
         //lấy id từ query của reqreq.user.id
         const role = req.user.role;
         if (role === 'customer') {
@@ -20,7 +20,7 @@ const getAllBookings = async (req, res) => {
             });
         }
         else {
-            let response = await bookingService.getAllBookings(page, limit, sortBy, sortOrder, status);
+            let response = await bookingService.getAllBookings(page, limit, sortBy, sortOrder, statusPayment, statusOrder);
             return res.status(200).json({
                 EC: response.EC,
                 EM: response.EM,

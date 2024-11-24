@@ -5,9 +5,7 @@ import User from "../model/user/user.schema.js";
 
 const getPromotionsValid = async (page, limit, search, userId) => {
     try {
-        // Bắt đầu tạo query lọc
         const matchConditions = {
-            status: status.ACTIVE,
             quantity: { $gt: 0 },
             startDate: { $lte: new Date() },
             endDate: { $gte: new Date() },
@@ -47,7 +45,8 @@ const getPromotionsValid = async (page, limit, search, userId) => {
                     condition: 1,
                     type: 1,
                     startDate: 1,
-                    endDate: 1
+                    endDate: 1,
+                    status: 1
                 }
             },
             { $skip: (+page - 1) * +limit },
@@ -128,7 +127,7 @@ const createPromotion = async (promotion) => {
         while (isDuplicate) {
             code = generateRandomString();
             const existingPromotion = await Promotion.findOne({ code: code });
-            isDuplicate = !!existingPromotion; 
+            isDuplicate = !!existingPromotion;
         }
 
         let newPromotion = await Promotion.create({
@@ -136,7 +135,7 @@ const createPromotion = async (promotion) => {
             description: promotion.description,
             quantity: promotion.quantity || 0,
             discount: promotion.discount,
-            condition: promotion.condition || 0,
+            condition: promotion?.condition || 0,
             type: promotion.type,
             startDate: promotion.startDate,
             endDate: promotion.endDate,
@@ -168,9 +167,9 @@ const updatePromotion = async (promotionId, promotion) => {
             condition: promotion.condition || 0,
             type: promotion.type,
             startDate: promotion.startDate,
-            endDate: promotion.endDate
+            endDate: promotion.endDate,
+            status: promotion.status
         }, { new: true })
-
         return {
             EC: 0,
             EM: "Cập nhật khuyến mãi thành công",
