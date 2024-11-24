@@ -11,7 +11,7 @@ const createIngredient = async (req, res) => {
         console.log(error);
         return res.status(500).json({
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: ""
         });
     }
@@ -28,7 +28,7 @@ const updateIngredient = async (req, res) => {
         console.log(error);
         return res.status(500).json({
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: ""
         });
     }
@@ -45,7 +45,7 @@ const getIngredientById = async (req, res) => {
         console.log(error);
         return res.status(500).json({
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: ""
         });
     }
@@ -62,7 +62,7 @@ const deleteIngredient = async (req, res) => {
         console.log(error);
         return res.status(500).json({
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: ""
         });
     }
@@ -80,7 +80,7 @@ const getAllIngredients = async (req, res) => {
         console.log(error);
         return res.status(500).json({
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: ""
         });
     }
@@ -97,7 +97,7 @@ const updateIngredientInventory = async (req, res) => {
         console.log(error);
         return res.status(500).json({
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: ""
         });
     }
@@ -116,7 +116,7 @@ const getUpdatedHistory = async (req, res) => {
         console.log(error);
         return res.status(500).json({
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: ""
         });
     }
@@ -134,7 +134,7 @@ const getStatistics = async (req, res) => {
         console.log(error);
         return res.status(500).json({
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: ""
         });
     }
@@ -152,7 +152,7 @@ const checkExpiredIngredients = async (req, res) => {
         console.log(error);
         return res.status(500).json({
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: ""
         });
     }

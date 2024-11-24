@@ -11,7 +11,7 @@ const createLeaveApplication = async (req, res) => {
         console.log(error);
         return res.status(500).json({
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: ""
         });
     }
@@ -28,37 +28,11 @@ const updateStatusLeaveApplication = async (req, res) => {
         console.log(error);
         return res.status(500).json({
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: ""
         });
     }
 };
-// const handleCheckPresence = async (req, res) => {
-//     try {
-//         const {date}=req.query;
-//         if(!date){
-//             return res.status(400).json({
-//                 EC: 400,
-//                 EM: "Dữ liệu không hợp lệ",
-//                 DT: ""
-//             });
-//         }
-//         const response = await leaveApplicationService.checkStaffInShiftIsPresent(req.query.date);
-//         return res.status(200).json({
-//             EC: response.EC,
-//             EM: response.EM,
-//             DT: response.DT
-//         });
-//     } catch (error) {
-//         console.log(error);
-//         return res.status(500).json({
-//             EC: 500,
-//             EM: "Error from server",
-//             DT: ""
-//         });
-//     }
-// };
-
 const checkIn = async (req, res) => {
     try {
         const response = await leaveApplicationService.checkIn(req.params.id);
@@ -71,7 +45,7 @@ const checkIn = async (req, res) => {
         console.log(error);
         return res.status(500).json({
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: ""
         });
     }
@@ -89,7 +63,7 @@ const checkOut = async (req, res) => {
         console.log(error);
         return res.status(500).json({
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: ""
         });
     }
@@ -106,14 +80,15 @@ const getTimeKeepingInMonth = async (req, res) => {
         console.log(error);
         return res.status(500).json({
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: ""
         });
     }
 }
-const getListLeaveApplication = async (req, res) => {
+const getListApplicationByDate= async (req, res) => {
     try {
-        const response = await leaveApplicationService.getListLeaveApplication(req.params.staff_id, req.params.status, req.params.start_date, req.params.end_date);
+        const { page, limit, date, status } = req.query;
+        const response = await leaveApplicationService.getListApplicationByDate(date, status, page, limit);
         return res.status(200).json({
             EC: response.EC,
             EM: response.EM,
@@ -123,7 +98,7 @@ const getListLeaveApplication = async (req, res) => {
         console.log(error);
         return res.status(500).json({
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: ""
         });
     }
@@ -134,6 +109,6 @@ export default {
     checkIn,
     checkOut,
     getTimeKeepingInMonth,
-    getListLeaveApplication
+    getListApplicationByDate
     // handleCheckPresence
 };

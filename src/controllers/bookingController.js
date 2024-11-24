@@ -31,7 +31,7 @@ const getAllBookings = async (req, res) => {
         console.log(error);
         return res.status(500).json({
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: "",
         });
     }
@@ -55,7 +55,7 @@ const createBooking = async (req, res) => {
         console.log(error);
         return res.status(500).json({
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: "",
         });
     }
@@ -72,7 +72,7 @@ const getBookingById = async (req, res) => {
         console.log(error);
         return res.status(500).json({
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: "",
         });
     }
@@ -89,7 +89,7 @@ const createComment = async (req, res) => {
         console.log(error);
         return res.status(500).json({
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: "",
         });
     }
@@ -106,7 +106,7 @@ const updateBooking = async (req, res) => {
         console.log(error);
         return res.status(500).json({
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: "",
         });
     }
@@ -123,7 +123,7 @@ const getOrderDetailByBookingId = async (req, res) => {
         console.log(error);
         return res.status(500).json({
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: "",
         });
     }
@@ -140,7 +140,7 @@ const getAllBookingsByPhoneNumber = async (req, res) => {
         console.log(error);
         return res.status(500).json({
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: "",
         });
     }
@@ -157,7 +157,7 @@ const payment = async (req, res) => {
         console.log(error);
         return res.status(500).json({
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: "",
         });
     }
@@ -174,7 +174,7 @@ const serveBooking = async (req, res) => {
         console.log(error);
         return res.status(500).json({
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: "",
         });
     }
@@ -191,7 +191,7 @@ const updateOrder = async (req, res) => {
         console.log(error);
         return res.status(500).json({
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: "",
         });
     }
@@ -208,7 +208,7 @@ const getOrderById = async (req, res) => {
         console.log(error);
         return res.status(500).json({
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: "",
         });
     }

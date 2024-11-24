@@ -11,7 +11,7 @@ const createFood = async (req, res) => {
         console.log(error);
         return res.status(500).json({
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: ""
         });
     }
@@ -28,7 +28,7 @@ const deleteFood = async (req, res) => {
         console.log(error);
         return res.status(500).json({
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: ""
         });
     }
@@ -48,7 +48,7 @@ const getAllFoods = async (req, res) => {
         console.log(error);
         return res.status(500).json({
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: ""
         });
     }
@@ -65,7 +65,7 @@ const getFoodById = async (req, res) => {
         console.log(error);
         return res.status(500).json({
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: ""
         });
     }
@@ -82,7 +82,7 @@ const updateFood = async (req, res) => {
         console.log(error);
         return res.status(500).json({
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: ""
         });
     }
@@ -99,7 +99,7 @@ const getFoodStats = async (req, res) => {
         console.log(error);
         return res.status(500).json({
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: ""
         });
     }
@@ -116,7 +116,7 @@ const searchFoods = async (req, res) => {
         console.log(error);
         return res.status(500).json({
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: ""
         });
     }
@@ -133,7 +133,7 @@ const getFoodsByType = async (req, res) => {
         console.log(error);
         return res.status(500).json({
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: ""
         });
     }
@@ -150,7 +150,7 @@ const updateFoodStatus = async (req, res) => {
         console.log(error);
         return res.status(500).json({
             EC: 500,
-            EM: "Error from server",
+            EM: "Lỗi hệ thống",
             DT: ""
         });
     }

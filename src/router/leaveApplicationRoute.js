@@ -11,7 +11,7 @@ let initLeaveApplicationRoute = (app) => {
     router.put("/check-out/:id", authentication, checkRole('staff', 'manager'), leaveApplicationController.checkOut);
     router.put("/:id", authentication, checkRole('admin', 'manager'), leaveApplicationController.updateStatusLeaveApplication);
     router.get("/time-keeping", authentication, checkRole('admin', 'manager'), leaveApplicationController.getTimeKeepingInMonth);
-    router.get("", authentication, checkRole('admin', 'manager'), leaveApplicationController.getListLeaveApplication);
+    router.get("", authentication, checkRole('admin', 'manager'), leaveApplicationController.getListApplicationByDate);
 
     return app.use("/api/leave-applications", router);
 }

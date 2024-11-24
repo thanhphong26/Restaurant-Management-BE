@@ -57,7 +57,7 @@ const registerUser = async (userData) => {
         console.log(error);
         return {
             EC: 500,
-            EM: 'Error from server',
+            EM: 'Lỗi hệ thống',
             DT: ''
         };
     }
@@ -105,7 +105,7 @@ const loginUser = async (username, password) => {
         console.log(error);
         return {
             EC: 500,
-            EM: 'Error from server',
+            EM: 'Lỗi hệ thống',
             DT: ''
         };
     }
@@ -149,7 +149,7 @@ const refreshToken = async (refreshToken) => {
         }
         return {
             EC: 500,
-            EM: 'Error from server',
+            EM: 'Lỗi hệ thống',
             DT: ''
         };
     }
@@ -179,7 +179,7 @@ const getUserProfile = async (userId) => {
         console.log(error);
         return {
             EC: 500,
-            EM: 'Error from server',
+            EM: 'Lỗi hệ thống',
             DT: ''
         };
     }
@@ -207,7 +207,7 @@ const updateUserProfile = async (userId, updateData) => {
         console.log(error);
         return {
             EC: 500,
-            EM: 'Error from server',
+            EM: 'Lỗi hệ thống',
             DT: ''
         };
     }
@@ -238,7 +238,7 @@ const getAllUsers = async (query = {}, page = 1, limit = 10) => {
         console.log(error);
         return {
             EC: 500,
-            EM: 'Error from server',
+            EM: 'Lỗi hệ thống',
             DT: ''
         };
     }
@@ -268,7 +268,7 @@ const logoutUser = async (userId, refreshToken) => {
         console.log(error);
         return {
             EC: 500,
-            EM: 'Error from server',
+            EM: 'Lỗi hệ thống',
             DT: ''
         };
     }
@@ -319,7 +319,7 @@ const registerStaff = async (staffData) => {
         console.log(error);
         return {
             EC: 500,
-            EM: "Error from server :>>",
+            EM: "Lỗi hệ thống :>>",
             DT: ""
         }
     }
@@ -369,7 +369,7 @@ const forgotPassword = async (email) => {
     catch (error) {
         return {
             EC: 500,
-            EM: 'Error from server',
+            EM: 'Lỗi hệ thống',
             DT: ''
         };
     }
@@ -415,7 +415,7 @@ const resetPassword = async (resetToken, newPassword) => {
         }
         return {
             EC: 500,
-            EM: 'Error from server',
+            EM: 'Lỗi hệ thống',
             DT: ''
         };
     }
