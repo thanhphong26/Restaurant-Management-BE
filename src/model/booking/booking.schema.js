@@ -60,7 +60,7 @@ const bookingSchema = new mongoose.Schema({
   },
   payment_method: {
     type: String,
-    enum: ['cash', 'credit_card', 'debit_card', 'mobile_payment', 'napas'],
+    enum: ['cash', 'credit', 'debit_card', 'mobile_payment', 'napas'],
     default: null
   },
   payment_status: {

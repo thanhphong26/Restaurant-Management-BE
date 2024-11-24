@@ -7,15 +7,16 @@ import { status, zone } from "../utils/index.js";
 import Promotion from "../model/promotions/promotion.schema.js";
 import { DateTime } from "luxon";
 import mongoose from "mongoose";
-const getAllBookings = async (page = 1, limit = 10, sortBy = 'date', sortOrder = 'asc', statusPayment = null, statusOrder = null) => {
-    let match = { $match: {} };
-
-    if (statusPayment) {
-        match.$match.payment_status = statusPayment;
-    }
-
-    if (statusOrder) {
-        match.$match.status = statusOrder;
+const getAllBookings = async (page = 1, limit = 10, sortBy = 'date', sortOrder = 'asc', status = null) => {
+    let match = {}
+    if (status) {
+        match = {
+            $match: { payment_status: status }
+        }
+    } else {
+        match = {
+            $match: {}
+        }
     }
     const pipelineMain = [match,
         {
@@ -370,7 +371,7 @@ const getAllBookingsByPhoneNumber = async (phone_number = null, page = 1, limit 
             .startOf("day"); // Đặt thời gian cụ thể
         // console.log(todayWithSpecificTime);
         if (phone_number) {
-            match = { $match: { phone_number: phone_number } }
+            match = { $match: { phone_number } }
             matchBooKing = { "booking.date": { $gte: todayWithSpecificTime } };
         } else {
             match = { $match: {} }
@@ -419,7 +420,7 @@ const getAllBookingsByPhoneNumber = async (phone_number = null, page = 1, limit 
                         date: "$booking.date",
                         time: "$booking.time",
                         deposit: "$booking.deposit",
-                        total: "$booking.total",
+                        // total: "$booking.total",
                         table: {
                             name: { $arrayElemAt: ["$table_info.name", 0] },
                             type: { $arrayElemAt: ["$table_info.type", 0] }
@@ -482,46 +483,62 @@ const getAllBookingsByPhoneNumber = async (phone_number = null, page = 1, limit 
 }
 const payment = async (id, data) => {
     try {
+
         let checkBooking = await Booking.findById(id);
         if (checkBooking.payment_status === 'paid') {
-            return;
+            return {
+                EC: 1,
+                EM: "Hóa đơn đã được thanh toán",
+                DT: ""
+            }
         } else {
-            // // kiểm tra mã giảm giá
-            // let Code = await Promotion.findOne({ code: data.voucher });
-            // if (!Code) {
-            //     return {
-            //         EC: 1,
-            //         EM: "Mã giảm giá không hợp lệ",
-            //         DT: ""
-            //     }
-            // }
-            // else {
-            //     // kiểm tra điều kiện mã giảm giá (status, startDate, endDate, condition)
-            //     if (Code.status !== 'active' && new Date() > Code.startDate && new Date() < Code.endDate && Code.quantity > 0) {
-            //         return {
-            //             EC: 1,
-            //             EM: "Không thể sử dụng mã giảm giá",
-            //             DT: ""
-            //         }
-            //     } else {
-            // thực hiện cập nhật promotion, booking, user 
-            // let promotion = await Promotion.findByIdAndUpdate(Code._id, { $inc: { quantity: -1 } }, { new: true });
-            let booking = await Booking.findByIdAndUpdate(id, { $set: { ...data, payment_status: 'paid' } }, { new: true });
-            // let user = await User.findByIdAndUpdate(booking.user_id, { $push: { save_voucher: data.voucher } }, { new: true });
-            if (booking)
+            // kiểm tra mã giảm giá
+            if (data.voucher !== "undefined") {
+
+                let Code = await Promotion.findOne({ code: data.voucher });
+                if (!Code) {
+                    return {
+                        EC: 1,
+                        EM: "Mã giảm giá không hợp lệ",
+                        DT: ""
+                    }
+                }
+                else {
+                    // kiểm tra điều kiện mã giảm giá (status, startDate, endDate, condition)
+                    if (Code.status !== 'active' && new Date() > Code.startDate && new Date() < Code.endDate && Code.quantity > 0) {
+                        return {
+                            EC: 1,
+                            EM: "Không thể sử dụng mã giảm giá",
+                            DT: ""
+                        }
+                    } else {
+                        // thực hiện cập nhật promotion, booking, user 
+                        let promotion = await Promotion.findByIdAndUpdate(Code._id, { $inc: { quantity: -1 } }, { new: true });
+                        let booking = await Booking.findByIdAndUpdate(id, { $set: { ...data, payment_status: 'paid' } }, { new: true });
+                        let user = await User.findByIdAndUpdate(booking.user_id, { $push: { save_voucher: data.voucher } }, { new: true });
+                        if (promotion && booking && user)
+                            return {
+                                EC: 0,
+                                EM: "Thanh toán thành công",
+                                DT: booking
+                            }
+                        else
+                            return {
+                                EC: 1,
+                                EM: "Thanh toán không thất bại",
+                                DT: ""
+                            }
+                    }
+                }
+            }
+            else {
+                let booking = await Booking.findByIdAndUpdate(id, { $set: { ...data, voucher: "", payment_status: 'paid' } }, { new: true });
                 return {
                     EC: 0,
                     EM: "Thanh toán thành công",
                     DT: booking
                 }
-            else
-                return {
-                    EC: 1,
-                    EM: "Thanh toán không thất bại",
-                    DT: ""
-                }
-            //     }
-            // }
+            }
         }
     }
     catch (error) {
