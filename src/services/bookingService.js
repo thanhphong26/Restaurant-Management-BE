@@ -70,26 +70,26 @@ const getAllBookings = async (page = 1, limit = 10, sortBy = 'date', sortOrder =
                                 status: "$$order.status"
                             }
                         }
-                    },
-
+                    }
                 }
             }
         },
 
-        {
-            $sort: {
-                ["date"]: -1,
-                ["time"]: 1
-            }
-        }]
+    ]
     const pipeline = [
         ...pipelineMain,
         {
-            $skip: (page - 1) * limit
+            $sort: {
+                "booking.date": -1,
+            }
+        },
+        {
+            $skip: (page - 1) * +limit
         },
         {
             $limit: +limit
-        }
+        },
+
     ];
     try {
         let infor = await Booking.aggregate(pipeline);
@@ -450,7 +450,7 @@ const getAllBookingsByPhoneNumber = async (phone_number = null, page = 1, limit 
         const pipeline = [
             ...pipelineMain,
             {
-                $skip: (page - 1) * limit
+                $skip: (page - 1) * + limit
             },
             {
                 $limit: +limit
