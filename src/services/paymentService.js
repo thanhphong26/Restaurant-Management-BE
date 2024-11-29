@@ -7,8 +7,8 @@ const createPayment = async (bookingId, paymentData) => {
     var secretKey = 'K951B6PE1waDMi640xX08PD3vg6EkVlz';
     var orderInfo = 'pay with MoMo';
     var partnerCode = 'MOMO';
-    var redirectUrl = 'http://localhost:/5173/';
-    var ipnUrl = 'https://4063-14-187-43-60.ngrok-free.app/api/payment/callback';
+    var redirectUrl = 'http://localhost:/5173/staff/booking';
+    var ipnUrl = 'https://4d44-2001-ee0-25c-2dfe-84c9-cbc5-ac28-310f.ngrok-free.app/api/payment/callback';
     var requestType = "payWithMethod";
     var amount = total;
     var orderId = partnerCode + new Date().getTime();
@@ -80,7 +80,7 @@ const createDeposit = async (userId, depositData) => {
     const partnerCode = 'MOMO';
     const orderInfo = 'Deposit for booking';
     const redirectUrl = 'http://localhost:5173/account';
-    const ipnUrl = 'https://4063-14-187-43-60.ngrok-free.app/api/deposit/callback';
+    const ipnUrl = 'https://4d44-2001-ee0-25c-2dfe-84c9-cbc5-ac28-310f.ngrok-free.app/api/deposit/callback';
     const requestType = "payWithMethod";
     const orderId = partnerCode + new Date().getTime();
     const requestId = orderId;

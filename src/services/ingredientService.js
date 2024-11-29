@@ -1,32 +1,32 @@
 import mongoose from "mongoose";
 import Ingredient from "../model/ingredients/ingredient.schema.js";
 import UpdateIngredient from "../model/updateIngredient/updateIngredient.schema.js";
-const createIngredient = async (ingredientData) => { 
+const createIngredient = async (ingredientData) => {
     try {
         //validate input data
-        const allowFields=['name','unit','description','type'];
-        const inventory=0;
-        const sanitizedData={};
-        Object.keys(ingredientData).forEach((field)=>{
-            if(allowFields.includes(field)){
-                sanitizedData[field]=ingredientData[field];
+        const allowFields = ['name', 'unit', 'description', 'type'];
+        const inventory = 0;
+        const sanitizedData = {};
+        Object.keys(ingredientData).forEach((field) => {
+            if (allowFields.includes(field)) {
+                sanitizedData[field] = ingredientData[field];
             }
         });
-        if(Object.keys(sanitizedData).length===0){
+        if (Object.keys(sanitizedData).length === 0) {
             return {
                 EC: 1,
                 EM: 'Dữ liệu không hợp lệ',
                 DT: ''
             };
         }
-        if(!sanitizedData.name||!sanitizedData.unit||!sanitizedData.type){
+        if (!sanitizedData.name || !sanitizedData.unit || !sanitizedData.type) {
             return {
                 EC: 1,
                 EM: 'Không được để trống thông tin nguyên liệu',
                 DT: ''
             };
         }
-        const newIngredient = new Ingredient({...sanitizedData, inventory});
+        const newIngredient = new Ingredient({ ...sanitizedData, inventory });
         //validate exist ingredient
         const existingIngredient = await Ingredient.findOne({ name: sanitizedData.name });
         if (existingIngredient) {
@@ -53,42 +53,42 @@ const createIngredient = async (ingredientData) => {
 }
 const updateIngredient = async (ingredientId, ingredientData) => {
     try {
-        const allowFields=['ingredient_id', 'quantity', 'date', 'supplier', 'expiration_date', 'price', 'type'];
-        const sanitizedData={};
-        Object.keys(ingredientData).forEach((field)=>{
-            if(allowFields.includes(field)){
-                sanitizedData[field]=ingredientData[field];
+        const allowFields = ['ingredient_id', 'quantity', 'date', 'supplier', 'expiration_date', 'price', 'type'];
+        const sanitizedData = {};
+        Object.keys(ingredientData).forEach((field) => {
+            if (allowFields.includes(field)) {
+                sanitizedData[field] = ingredientData[field];
             }
         });
-        if(Object.keys(sanitizedData).length===0){
+        if (Object.keys(sanitizedData).length === 0) {
             return {
                 EC: 1,
                 EM: 'Dữ liệu không hợp lệ',
                 DT: ''
             };
         }
-        if(sanitizedData.quantity<0){
+        if (sanitizedData.quantity < 0) {
             return {
                 EC: 1,
                 EM: 'Số lượng không hợp lệ',
                 DT: ''
             };
         }
-        if(sanitizedData.price<0){
+        if (sanitizedData.price < 0) {
             return {
                 EC: 1,
                 EM: 'Giá tiền không hợp lệ',
                 DT: ''
             };
         }
-        if(sanitizedData.expiration_date&&new Date(sanitizedData.expiration_date)<new Date()){
+        if (sanitizedData.expiration_date && new Date(sanitizedData.expiration_date) < new Date()) {
             return {
                 EC: 1,
                 EM: 'Ngày hết hạn không hợp lệ',
                 DT: ''
             };
         }
-        if(sanitizedData.type&&sanitizedData.type!=='import'&&sanitizedData.type!=='export'){
+        if (sanitizedData.type && sanitizedData.type !== 'import' && sanitizedData.type !== 'export') {
             return {
                 EC: 1,
                 EM: 'Loại cập nhật không hợp lệ',
@@ -121,7 +121,7 @@ const updateIngredient = async (ingredientId, ingredientData) => {
 const deleteIngredient = async (ingredientId) => {
     try {
         const ingredient = await Ingredient.findByIdAndDelete(ingredientId);
-        
+
         if (!ingredient) {
             return {
                 EC: 1,
@@ -177,7 +177,7 @@ const getAllIngredients = async (query = {}, page = 1, limit = 10) => {
     };
 
     const filter = {};
-    
+
     // Flexible text search across multiple fields
     if (query.searchTerm) {
         filter.$or = [
@@ -191,12 +191,12 @@ const getAllIngredients = async (query = {}, page = 1, limit = 10) => {
     if (query.name) filter.name = { $regex: query.name, $options: 'i' };
     if (query.type) filter.type = query.type;
     if (query.status) filter.status = query.status;
-    
+
     // Range filters for numeric fields
     if (query.minInventory) filter.inventory = { $gte: query.minInventory };
-    if (query.maxInventory) filter.inventory = { 
-        ...filter.inventory, 
-        $lte: query.maxInventory 
+    if (query.maxInventory) filter.inventory = {
+        ...filter.inventory,
+        $lte: query.maxInventory
     };
 
     try {
@@ -233,21 +233,20 @@ const updateIngredientInventory = async (ingredientId, updateData) => {
         if (updateData.type === 'import') {
             newInventory += updateData.quantity;
             transactionPrice = updateData.price;
-            
-            // Validate import data
+
             if (!updateData.price || updateData.price < 0) {
                 throw new Error('Giá nhập không hợp lệ');
             }
-        } 
+        }
         else if (updateData.type === 'export') {
             // Kiểm tra số lượng xuất
             if (newInventory < updateData.quantity) {
                 await session.abortTransaction();
                 session.endSession();
-                return { 
-                    EC: 1, 
-                    EM: 'Số lượng xuất vượt quá tồn kho', 
-                    DT: '' 
+                return {
+                    EC: 1,
+                    EM: 'Số lượng xuất vượt quá tồn kho',
+                    DT: ''
                 };
             }
 
@@ -258,6 +257,16 @@ const updateIngredientInventory = async (ingredientId, updateData) => {
                 quantity: { $gt: 0 }
             }).sort({ date: 1 });
 
+            // Tính tổng số lượng từ các lô nhập
+            const totalImportedQuantity = importBatches.reduce((sum, batch) => sum + batch.quantity, 0);
+            console.log('Debug - Total Imported Quantity:', totalImportedQuantity);
+            console.log('Debug - Requested Export Quantity:', updateData.quantity);
+            console.log('Debug - Import Batches:', importBatches.map(batch => ({
+                id: batch._id,
+                quantity: batch.quantity,
+                date: batch.date
+            })));
+
             let remainingQuantityToExport = updateData.quantity;
             let exportCostTotal = 0;
             let exportQuantityTotal = 0;
@@ -266,7 +275,14 @@ const updateIngredientInventory = async (ingredientId, updateData) => {
                 if (remainingQuantityToExport <= 0) break;
 
                 const quantityToUseFromBatch = Math.min(batch.quantity, remainingQuantityToExport);
-                
+
+                console.log('Debug - Batch Processing:', {
+                    batchId: batch._id,
+                    batchQuantity: batch.quantity,
+                    quantityToUseFromBatch,
+                    remainingToExport: remainingQuantityToExport
+                });
+
                 // Cập nhật số lượng của lô hàng
                 batch.quantity -= quantityToUseFromBatch;
                 await batch.save({ session });
@@ -282,10 +298,10 @@ const updateIngredientInventory = async (ingredientId, updateData) => {
             if (remainingQuantityToExport > 0) {
                 await session.abortTransaction();
                 session.endSession();
-                return { 
-                    EC: 1, 
-                    EM: 'Không đủ số lượng nguyên liệu để xuất', 
-                    DT: '' 
+                return {
+                    EC: 1,
+                    EM: 'Không đủ số lượng nguyên liệu để xuất',
+                    DT: ''
                 };
             }
 
@@ -301,6 +317,7 @@ const updateIngredientInventory = async (ingredientId, updateData) => {
         // Tạo giao dịch
         const transaction = new UpdateIngredient({
             ...updateData,
+            ingredient_id: ingredientId,
             price: transactionPrice
         });
         await transaction.save({ session });
@@ -317,10 +334,10 @@ const updateIngredientInventory = async (ingredientId, updateData) => {
         await session.abortTransaction();
         session.endSession();
         console.error('Inventory Update Error:', error);
-        return { 
-            EC: 1, 
-            EM: error.message || 'Lỗi khi cập nhật số lượng nguyên liệu', 
-            DT: '' 
+        return {
+            EC: 1,
+            EM: error.message || 'Lỗi khi cập nhật số lượng nguyên liệu',
+            DT: ''
         };
     }
 }
@@ -353,21 +370,21 @@ const getUpdatedHistory = async (ingredientId, query = {}, page = 1, limit = 10)
             DT: ''
         };
     }
-    
+
 }
-const getStatistics=async(startDate,endDate)=>{
-    try{
-        const statistics=await UpdateIngredient.aggregate([
+const getStatistics = async (startDate, endDate) => {
+    try {
+        const statistics = await UpdateIngredient.aggregate([
             {
-                $match:{
-                    date:{
+                $match: {
+                    date: {
                         $gte: new Date(startDate),
                         $lte: new Date(endDate)
                     }
                 }
             },
             {
-                $group:{
+                $group: {
                     _id: "$type",
                     total: { $sum: "$quantity" }
                 }
@@ -378,7 +395,7 @@ const getStatistics=async(startDate,endDate)=>{
             EM: 'Lấy thống kê thành công',
             DT: statistics
         };
-    }catch(error){
+    } catch (error) {
         console.log(error);
         return {
             EC: 1,
@@ -387,8 +404,8 @@ const getStatistics=async(startDate,endDate)=>{
         };
     }
 }
-const checkExpiredIngredients=async(page=1, limit=10)=>{
-    try{
+const checkExpiredIngredients = async (page = 1, limit = 10) => {
+    try {
         const skip = (page - 1) * limit;
 
         // Lấy dữ liệu từ cơ sở dữ liệu với phân trang
@@ -409,7 +426,7 @@ const checkExpiredIngredients=async(page=1, limit=10)=>{
 
         // Tạo kết quả trả về
         const result = ingredients.map(item => ({
-            ingredientName: item.ingredient_id.name, // Tên nguyên liệu
+            ingredientName: item.ingredient_id?.name, // Tên nguyên liệu
             expirationDate: item.expiration_date, // Ngày hết hạn
             quantity: item.quantity, // Số lượng còn lại
             price: item.price, // Giá nhập/xuất
